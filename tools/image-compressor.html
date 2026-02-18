@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Image Compressor – Rahul Tools</title>
+
+  <!-- ZIP + SaveAs (Download All as ZIP) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      padding: 18px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .topbar{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap: wrap;
+    }
+    .muted{ opacity:0.7; font-size: 14px; }
+
+    .tool{
+      margin-top: 14px;
+      border: 1px solid #e7e7e7;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .controls{
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 900px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+
+    label{ font-size: 14px; opacity: 0.9; display:block; margin-bottom: 6px; }
+    input[type="file"], select, input[type="range"]{
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    input[type="range"]{ padding: 0; }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button{
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+    }
+    button.primary{
+      border-color:#111;
+      background:#111;
+      color:#fff;
+    }
+    button:disabled{
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .note{
+      margin-top: 10px;
+      font-size: 13px;
+      opacity: 0.75;
+      line-height: 1.4;
+    }
+
+    .grid{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border: 1px solid #eee;
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .thumb{
+      width:100%;
+      height: 190px;
+      object-fit: cover;
+      display:block;
+      background:#f7f7f7;
+    }
+    .cardBody{
+      padding: 12px;
+    }
+    .row{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      margin: 6px 0;
+      opacity: 0.9;
+    }
+    .small{
+      font-size: 12px;
+      opacity: 0.75;
+      word-break: break-all;
+    }
+    .cardActions{
+      display:flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .pill{
+      display:inline-block;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #eee;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+
+<a href="../index.html">← Back to Home</a>
+
+<body>
+  <div class="topbar">
+    <div>
+      <div class="muted">© Rahul Negi 2026</div>
+      <h1 style="margin:6px 0 0 0;">Image Compressor</h1>
+      <div class="muted">Compress images in your browser (no upload). Bulk download as ZIP.</div>
+    </div>
+  </div>
+
+  <div class="tool">
+    <input type="file" id="files" accept="image/*" multiple />
+
+    <div class="controls">
+      <div>
+        <label>Output format</label>
+        <select id="format">
+          <option value="original">Original (keep type)</option>
+          <option value="jpeg">JPG (smaller, no transparency)</option>
+          <option value="webp">WEBP (smaller, good quality)</option>
+          <option value="png">PNG (lossless, bigger)</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Quality: <span id="qLabel">0.75</span></label>
+        <input type="range" id="quality" min="0.2" max="1" step="0.05" value="0.75" />
+      </div>
+
+      <div>
+        <label>Max width (px)</label>
+        <select id="maxWidth">
+          <option value="0">Keep original</option>
+          <option value="2560">2560</option>
+          <option value="1920">1920</option>
+          <option value="1280">1280</option>
+          <option value="1024">1024</option>
+          <option value="800">800</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="compressBtn" onclick="compressAll()" disabled>Compress</button>
+      <button id="zipBtn" onclick="downloadAllZip()" disabled>Download All (ZIP)</button>
+      <button onclick="clearAll()">Clear</button>
+    </div>
+
+    <div class="note">
+      Tip: PNG images with transparency ko JPG me convert karoge to background black/white ho sakta hai (transparency lost). WEBP usually best.
+    </div>
+
+    <div id="summary" class="note"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+<script>
+  const filesInput = document.getElementById("files");
+  const grid = document.getElementById("grid");
+  const compressBtn = document.getElementById("compressBtn");
+  const zipBtn = document.getElementById("zipBtn");
+
+  const qualityEl = document.getElementById("quality");
+  const qLabel = document.getElementById("qLabel");
+  const formatEl = document.getElementById("format");
+  const maxWidthEl = document.getElementById("maxWidth");
+  const summaryEl = document.getElementById("summary");
+
+  let items = []; // { file, originalBytes, originalName, originalType, previewUrl, compressedBlob, compressedUrl, compressedBytes, outName }
+
+  qualityEl.addEventListener("input", () => qLabel.textContent = Number(qualityEl.value).toFixed(2));
+
+  filesInput.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    // reset previous
+    items = files.map(f => ({
+      file: f,
+      originalBytes: f.size,
+      originalName: f.name,
+      originalType: f.type || "image/*",
+      previewUrl: URL.createObjectURL(f),
+      compressedBlob: null,
+      compressedUrl: null,
+      compressedBytes: 0,
+      outName: null
+    }));
+
+    render();
+    compressBtn.disabled = false;
+    zipBtn.disabled = true;
+    summaryEl.textContent = "";
+  });
+
+  function clearAll(){
+    // cleanup URLs
+    items.forEach(it => {
+      if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+      if (it.compressedUrl) URL.revokeObjectURL(it.compressedUrl);
+    });
+    items = [];
+    grid.innerHTML = "";
+    filesInput.value = "";
+    compressBtn.disabled = true;
+    zipBtn.disabled = true;
+    summaryEl.textContent = "";
+  }
+
+  function bytesToKB(bytes){
+    return (bytes / 1024).toFixed(1) + " KB";
+  }
+
+  function extFor(type){
+    if (type === "image/jpeg") return "jpg";
+    if (type === "image/webp") return "webp";
+    if (type === "image/png") return "png";
+    return "img";
+  }
+
+  function pickOutputMime(originalType){
+    const choice = formatEl.value;
+    if (choice === "original") {
+      // keep original if supported; else fallback
+      if (originalType === "image/png") return "image/png";
+      if (originalType === "image/webp") return "image/webp";
+      return "image/jpeg";
+    }
+    if (choice === "jpeg") return "image/jpeg";
+    if (choice === "webp") return "image/webp";
+    if (choice === "png") return "image/png";
+    return "image/jpeg";
+  }
+
+  function baseName(filename){
+    const idx = filename.lastIndexOf(".");
+    return idx > 0 ? filename.slice(0, idx) : filename;
+  }
+
+  function render(){
+    grid.innerHTML = "";
+    items.forEach((it, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.src = it.compressedUrl || it.previewUrl;
+
+      const body = document.createElement("div");
+      body.className = "cardBody";
+
+      const name = document.createElement("div");
+      name.className = "small";
+      name.textContent = it.originalName;
+
+      const row1 = document.createElement("div");
+      row1.className = "row";
+      row1.innerHTML = `<span>Original</span><span>${bytesToKB(it.originalBytes)}</span>`;
+
+      const row2 = document.createElement("div");
+      row2.className = "row";
+      const compressedText = it.compressedBlob ? bytesToKB(it.compressedBytes) : "—";
+      row2.innerHTML = `<span>Compressed</span><span>${compressedText}</span>`;
+
+      const pills = document.createElement("div");
+      pills.style.marginTop = "8px";
+      const outType = it.compressedBlob ? it.compressedBlob.type : it.originalType;
+      pills.innerHTML = `
+        <span class="pill">${outType || "image"}</span>
+        ${it.compressedBlob ? `<span class="pill">Saved ${(100 - (it.compressedBytes / it.originalBytes * 100)).toFixed(1)}%</span>` : `<span class="pill">Not compressed</span>`}
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "cardActions";
+
+      const dlOriginal = document.createElement("button");
+      dlOriginal.textContent = "Download original";
+      dlOriginal.onclick = () => downloadBlob(it.file, it.originalName);
+
+      const dlCompressed = document.createElement("button");
+      dlCompressed.textContent = "Download compressed";
+      dlCompressed.disabled = !it.compressedBlob;
+      dlCompressed.onclick = () => downloadBlob(it.compressedBlob, it.outName);
+
+      actions.appendChild(dlOriginal);
+      actions.appendChild(dlCompressed);
+
+      body.appendChild(name);
+      body.appendChild(row1);
+      body.appendChild(row2);
+      body.appendChild(pills);
+      body.appendChild(actions);
+
+      card.appendChild(img);
+      card.appendChild(body);
+
+      grid.appendChild(card);
+    });
+  }
+
+  function downloadBlob(blobOrFile, filename){
+    const url = URL.createObjectURL(blobOrFile);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "download";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function fileToImage(file){
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
+    const img = await new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = reject;
+      im.src = dataUrl;
+    });
+
+    return img;
+  }
+
+  function drawToCanvas(img, maxW){
+    const canvas = document.createElement("canvas");
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+
+    if (maxW && maxW > 0 && w > maxW){
+      const ratio = maxW / w;
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas;
+  }
+
+  async function canvasToBlob(canvas, mime, quality){
+    // PNG ignores quality param; JPEG/WEBP uses it.
+    return await new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), mime, quality);
+    });
+  }
+
+  async function compressAll(){
+    if (!items.length) return;
+
+    compressBtn.disabled = true;
+    zipBtn.disabled = true;
+    compressBtn.textContent = "Compressing...";
+
+    const q = Number(qualityEl.value);
+    const maxW = Number(maxWidthEl.value);
+
+    let totalOriginal = 0;
+    let totalCompressed = 0;
+
+    for (let i = 0; i < items.length; i++){
+      const it = items[i];
+      totalOriginal += it.originalBytes;
+
+      // cleanup old compressed URL
+      if (it.compressedUrl) {
+        URL.revokeObjectURL(it.compressedUrl);
+        it.compressedUrl = null;
+      }
+
+      const img = await fileToImage(it.file);
+      const canvas = drawToCanvas(img, maxW);
+
+      const outMime = pickOutputMime(it.originalType);
+
+      // If output is JPEG and source has transparency, background becomes black by default in some cases.
+      // We can fill white background for JPEG to avoid black.
+      if (outMime === "image/jpeg") {
+        const ctx = canvas.getContext("2d");
+        // draw white background behind existing pixels
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = "source-over";
+      }
+
+      const blob = await canvasToBlob(canvas, outMime, q);
+      // Fallback safety
+      if (!blob){
+        it.compressedBlob = null;
+        it.compressedBytes = 0;
+        it.outName = null;
+        continue;
+      }
+
+      it.compressedBlob = blob;
+      it.compressedBytes = blob.size;
+
+      const outExt = extFor(blob.type);
+      it.outName = `${baseName(it.originalName)}-compressed.${outExt}`;
+
+      it.compressedUrl = URL.createObjectURL(blob);
+
+      totalCompressed += it.compressedBytes;
+      render(); // live update
+    }
+
+    const savedPct = totalOriginal ? (100 - (totalCompressed / totalOriginal * 100)) : 0;
+    summaryEl.textContent =
+      `Done. Total: ${bytesToKB(totalOriginal)} → ${bytesToKB(totalCompressed)} (saved ${savedPct.toFixed(1)}%).`;
+
+    compressBtn.disabled = false;
+    compressBtn.textContent = "Compress";
+    zipBtn.disabled = false;
+  }
+
+  async function downloadAllZip(){
+    if (!items.length) return;
+
+    // Require compression first (so consistent output)
+    const anyCompressed = items.some(it => it.compressedBlob);
+    if (!anyCompressed){
+      alert("Please click Compress first.");
+      return;
+    }
+
+    zipBtn.disabled = true;
+    zipBtn.textContent = "Zipping...";
+
+    const zip = new JSZip();
+    const folder = zip.folder("compressed-images");
+
+    items.forEach((it) => {
+      if (it.compressedBlob){
+        folder.file(it.outName, it.compressedBlob);
+      }
+    });
+
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "compressed-images.zip");
+
+    zipBtn.disabled = false;
+    zipBtn.textContent = "Download All (ZIP)";
+  }
+</script>
+
+</body>
+</html>
