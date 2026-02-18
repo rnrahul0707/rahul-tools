@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Image to PDF – Rahul Tools</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+
+<style>
+  body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#ffffff;
+    color:#222;
+    padding:20px;
+  }
+
+  .wrap{ max-width:1100px; margin:0 auto; }
+
+  h1{ margin:5px 0; }
+
+  .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:15px;
+  }
+
+  .panel{
+    border:1px solid #e5e5e5;
+    border-radius:14px;
+    padding:15px;
+  }
+
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+
+  .fileBtn{
+    position:relative;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    cursor:pointer;
+    background:#f9f9f9;
+  }
+  .fileBtn input{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    cursor:pointer;
+  }
+
+  button{
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    background:#f9f9f9;
+    cursor:pointer;
+  }
+
+  button.primary{
+    background:#111;
+    color:#fff;
+    border-color:#111;
+  }
+
+  button:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+
+  .status{
+    font-size:14px;
+    color:#666;
+  }
+
+  .grid{
+    margin-top:15px;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:12px;
+  }
+
+  @media(max-width:900px){
+    .grid{ grid-template-columns:repeat(3,1fr); }
+  }
+  @media(max-width:650px){
+    .grid{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media(max-width:450px){
+    .grid{ grid-template-columns:1fr; }
+  }
+
+  .card{
+    border:1px solid #e5e5e5;
+    border-radius:12px;
+    overflow:hidden;
+    background:#fff;
+    position:relative;
+  }
+
+  .thumb{
+    width:100%;
+    height:150px;
+    object-fit:cover;
+    background:#f2f2f2;
+  }
+
+  .meta{
+    padding:8px 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .name{
+    font-size:12px;
+    color:#555;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    max-width:75%;
+  }
+
+  .iconBtn{
+    cursor:pointer;
+    font-size:16px;
+  }
+
+  .handle{
+    position:absolute;
+    top:8px;
+    left:8px;
+    background:#fff;
+    border:1px solid #ddd;
+    padding:4px 6px;
+    font-size:12px;
+    border-radius:6px;
+    cursor:grab;
+  }
+
+  .order{
+    position:absolute;
+    top:8px;
+    right:8px;
+    background:#fff;
+    border:1px solid #ddd;
+    padding:4px 8px;
+    font-size:12px;
+    border-radius:20px;
+  }
+
+</style>
+</head>
+
+<a href="../index.html">← Back to Home</a>
+
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <div style="font-size:14px;color:#777;">© Rahul Negi 2026</div>
+      <h1>Image to PDF Converter</h1>
+      <div class="status" id="statusText">No images selected</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="toolbar">
+      <div>
+        <label class="fileBtn">
+          Upload Images
+          <input type="file" id="images" accept="image/*" multiple>
+        </label>
+        <button onclick="clearAll()">Clear</button>
+      </div>
+
+      <button class="primary" id="createBtn" onclick="createPDF()" disabled>Create PDF</button>
+    </div>
+
+    <div class="grid" id="preview"></div>
+  </div>
+
+</div>
+
+<script>
+let items = [];
+let sortable;
+
+const imagesInput = document.getElementById("images");
+const preview = document.getElementById("preview");
+const createBtn = document.getElementById("createBtn");
+const statusText = document.getElementById("statusText");
+
+imagesInput.addEventListener("change", (e)=>{
+  const files = Array.from(e.target.files || []);
+  items = files.map((file, idx)=>({
+    id: Date.now()+idx,
+    file,
+    url: URL.createObjectURL(file)
+  }));
+  render();
+  initSortable();
+  updateStatus();
+});
+
+function updateStatus(){
+  if(!items.length){
+    statusText.textContent = "No images selected";
+    createBtn.disabled = true;
+  } else {
+    statusText.textContent = items.length+" image(s) selected – drag to reorder";
+    createBtn.disabled = false;
+  }
+}
+
+function clearAll(){
+  items.forEach(i=>URL.revokeObjectURL(i.url));
+  items=[];
+  preview.innerHTML="";
+  imagesInput.value="";
+  updateStatus();
+}
+
+function removeAt(i){
+  URL.revokeObjectURL(items[i].url);
+  items.splice(i,1);
+  render();
+  initSortable();
+  updateStatus();
+}
+
+function render(){
+  preview.innerHTML="";
+  items.forEach((it,i)=>{
+    const card=document.createElement("div");
+    card.className="card";
+    card.dataset.id=it.id;
+
+    const img=document.createElement("img");
+    img.src=it.url;
+    img.className="thumb";
+
+    const handle=document.createElement("div");
+    handle.className="handle";
+    handle.textContent="drag";
+
+    const order=document.createElement("div");
+    order.className="order";
+    order.textContent="#"+(i+1);
+
+    const meta=document.createElement("div");
+    meta.className="meta";
+
+    const name=document.createElement("div");
+    name.className="name";
+    name.textContent=it.file.name;
+
+    const del=document.createElement("div");
+    del.className="iconBtn";
+    del.textContent="🗑";
+    del.onclick=()=>removeAt(i);
+
+    meta.appendChild(name);
+    meta.appendChild(del);
+
+    card.appendChild(handle);
+    card.appendChild(order);
+    card.appendChild(img);
+    card.appendChild(meta);
+
+    preview.appendChild(card);
+  });
+}
+
+function initSortable(){
+  if(sortable) sortable.destroy();
+  sortable=new Sortable(preview,{
+    animation:150,
+    handle:".handle",
+    onEnd:()=>{
+      const newIds=[...preview.children].map(el=>Number(el.dataset.id));
+      items=newIds.map(id=>items.find(i=>i.id===id));
+      render();
+      initSortable();
+    }
+  });
+}
+
+async function createPDF(){
+  if(!items.length) return;
+
+  createBtn.disabled=true;
+  createBtn.textContent="Creating...";
+
+  const {jsPDF}=window.jspdf;
+  let pdf=null;
+
+  for(let i=0;i<items.length;i++){
+    const file=items[i].file;
+
+    const dataUrl=await new Promise(res=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result);
+      r.readAsDataURL(file);
+    });
+
+    const img=await new Promise(res=>{
+      const im=new Image();
+      im.onload=()=>res(im);
+      im.src=dataUrl;
+    });
+
+    const w=img.naturalWidth;
+    const h=img.naturalHeight;
+
+    if(!pdf){
+      pdf=new jsPDF({
+        orientation:w>=h?"l":"p",
+        unit:"px",
+        format:[w,h]
+      });
+    } else {
+      pdf.addPage([w,h],w>=h?"l":"p");
+    }
+
+    const format=file.type.includes("png")?"PNG":"JPEG";
+    pdf.addImage(dataUrl,format,0,0,w,h);
+  }
+
+  pdf.save("images.pdf");
+
+  createBtn.disabled=false;
+  createBtn.textContent="Create PDF";
+}
+
+updateStatus();
+</script>
+
+</body>
+</html>
