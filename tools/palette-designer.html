@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Palette Designer</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#111;
+  overflow:hidden;
+}
+
+/* HEADER */
+.header{
+  position:fixed;
+  top:0; left:0; right:0;
+  height:70px;
+  background:#ffffff;
+  color:#000;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 20px;
+  z-index:100;
+  box-shadow:0 4px 20px rgba(0,0,0,0.1);
+}
+.headerLeft{display:flex;align-items:center;gap:15px;}
+.headerRight{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.credit{font-weight:bold;font-size:13px;}
+
+.btn{
+  padding:8px 14px;
+  border-radius:999px;
+  background:#eee;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
+}
+.btn:hover{background:#ddd}
+.btn.primary{background:#000;color:#fff}
+
+/* PALETTE AREA */
+.palette{
+  position:fixed;
+  top:70px;
+  bottom:64px;
+  left:0;
+  right:0;
+  display:flex;
+}
+
+.col{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  padding:22px 15px;
+  position:relative;
+}
+
+/* keep active white outline */
+.col.active{
+  outline:4px solid #fff;
+  outline-offset:-6px;
+}
+
+.hex{
+  font-size:26px;
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+}
+
+.sub{
+  font-size:12px;
+  margin-top:6px;
+  opacity:0.9;
+  width:max-content;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.18);
+}
+
+.tools{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.iconBtn{
+  padding:8px 10px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
+  background:rgba(255,255,255,0.85);
+}
+.iconBtn:hover{background:#fff}
+
+.editor{
+  margin-top:10px;
+  display:none;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:10px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.18);
+  width:max-content;
+}
+.editor input[type="color"]{
+  width:44px;height:40px;border:none;background:none;padding:0;
+}
+.editor input[type="text"]{
+  padding:10px 10px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  width:120px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.editor button{
+  padding:10px 12px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  font-weight:900;
+}
+
+/* FOOTER (easy shortcuts) */
+.footerBar{
+  position:fixed;
+  bottom:0; left:0; right:0;
+  height:64px;
+  background:#ffffff;
+  color:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 14px;
+  text-align:center;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.1);
+}
+.footerInner{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:center;
+  font-size:14px;
+}
+.kbd{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#000;
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+}
+.sep{opacity:.5}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  top:82px;
+  right:20px;
+  background:#000;
+  color:#fff;
+  padding:10px 12px;
+  border-radius:10px;
+  display:none;
+  font-weight:bold;
+  z-index:200;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="headerLeft">
+    <a href="../index.html">← Back to Home</a>
+
+    <h2 style="margin:0">Palette Designer</h2>
+  </div>
+
+  <div class="headerRight">
+    <button class="btn" id="addBtn">+ Add</button>
+    <button class="btn" id="removeBtn">− Remove</button>
+    <button class="btn primary" id="exportBtn">Export HTML</button>
+    <span class="credit">© Rahul Negi 2026</span>
+  </div>
+</div>
+
+<!-- PALETTE -->
+<div class="palette" id="palette"></div>
+
+<!-- FOOTER (easy shortcuts) -->
+<div class="footerBar">
+  <div class="footerInner">
+    <span class="kbd">Space</span><span>Generate</span>
+    <span class="sep">•</span>
+    <span class="kbd">L</span><span>Lock</span>
+    <span class="sep">•</span>
+    <span class="kbd">E</span><span>Edit</span>
+    <span class="sep">•</span>
+    <span class="kbd">← →</span><span>Move</span>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+const DEFAULT = ["#FCFCFC","#F7567C","#FFFAE3","#99E1D9","#5D576B"];
+
+let colors = DEFAULT.map(c => ({color:c, locked:false}));
+let active = 0;
+
+const palette = document.getElementById("palette");
+const toast = document.getElementById("toast");
+
+function showToast(text="Copied!"){
+  toast.innerText=text;
+  toast.style.display="block";
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>toast.style.display="none",900);
+}
+
+function randomHex(){
+  return "#"+Math.floor(Math.random()*16777215).toString(16).padStart(6,"0").toUpperCase();
+}
+
+function idealText(bg){
+  const r=parseInt(bg.substr(1,2),16);
+  const g=parseInt(bg.substr(3,2),16);
+  const b=parseInt(bg.substr(5,2),16);
+  const yiq=((r*299)+(g*587)+(b*114))/1000;
+  return yiq>=150?"#000":"#fff";
+}
+
+function downloadFile(name, content, type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportHTML(){
+  const hexList = colors.map(c=>c.color.toUpperCase());
+
+  const swatches = hexList.map(h=>`
+    <div class="sw">
+      <div class="box" style="background:${h}"></div>
+      <div class="code">${h}</div>
+    </div>
+  `).join("");
+
+  const cssVars = hexList.map((h,i)=>`  --c${i+1}: ${h};`).join("\n");
+  const gradient = `linear-gradient(90deg, ${hexList.join(", ")})`;
+
+  const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Palette Export</title>
+<style>
+  body{font-family:Arial;margin:0;padding:24px;background:#f4f4f4;color:#111}
+  .wrap{max-width:1000px;margin:auto}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  h2{margin:0}
+  .credit{font-weight:900;color:#555}
+  .grid{display:grid;grid-template-columns:repeat(${Math.min(6, hexList.length)},1fr);gap:12px;margin-top:16px}
+  .sw{background:#fff;border:1px solid #e6e6e6;border-radius:14px;overflow:hidden}
+  .box{height:120px}
+  .code{padding:10px 12px;font-weight:900}
+  .code2{margin-top:18px;background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:14px}
+  pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+  .preview{height:80px;border-radius:14px;border:1px solid #e6e6e6;margin-top:12px;background:${gradient}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h2>Color Palette</h2>
+        <div class="preview"></div>
+      </div>
+      <div class="credit">© Rahul Negi 2026</div>
+    </div>
+
+    <div class="grid">
+      ${swatches}
+    </div>
+
+    <div class="code2">
+      <h3 style="margin:0 0 10px 0;">HEX Codes</h3>
+      <pre>${hexList.join("\n")}</pre>
+
+      <h3 style="margin:16px 0 10px 0;">CSS Variables</h3>
+      <pre>:root{
+${cssVars}
+}</pre>
+
+      <h3 style="margin:16px 0 10px 0;">Gradient Example</h3>
+      <pre>background: ${gradient};</pre>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  downloadFile("palette.html", html, "text/html");
+  showToast("Exported ✅ (palette.html)");
+}
+
+function render(){
+  palette.innerHTML="";
+  colors.forEach((c,i)=>{
+    const col=document.createElement("div");
+    col.className="col"+(i===active?" active":"");
+    col.style.background=c.color;
+    col.style.color=idealText(c.color);
+
+    col.innerHTML=`
+      <div>
+        <div class="hex">${c.color}</div>
+        <div class="sub">${c.locked?"Locked 🔒":"Unlocked"} • ${i+1}/${colors.length}</div>
+
+        <div class="tools">
+          <button class="iconBtn" title="Lock (L)">${c.locked ? "🔒" : "🔓"}</button>
+          <button class="iconBtn" title="Edit (E)">🎨</button>
+          <button class="iconBtn" title="Move Left">←</button>
+          <button class="iconBtn" title="Move Right">→</button>
+        </div>
+
+        <div class="editor">
+          <input type="color" value="${c.color}">
+          <input type="text" value="${c.color.replace("#","")}" maxlength="6">
+          <button>Apply</button>
+        </div>
+      </div>
+    `;
+
+    // click HEX -> copy
+    col.querySelector(".hex").onclick=(e)=>{
+      e.stopPropagation();
+      navigator.clipboard.writeText(c.color);
+      showToast("HEX Copied ✅");
+    };
+
+    // lock
+    col.querySelectorAll(".iconBtn")[0].onclick=(e)=>{
+      e.stopPropagation();
+      c.locked=!c.locked;
+      render();
+    };
+
+    // edit toggle
+    col.querySelectorAll(".iconBtn")[1].onclick=(e)=>{
+      e.stopPropagation();
+      const ed=col.querySelector(".editor");
+      ed.style.display = (ed.style.display==="flex") ? "none" : "flex";
+    };
+
+    // move
+    col.querySelectorAll(".iconBtn")[2].onclick=(e)=>{
+      e.stopPropagation();
+      if(i>0){[colors[i],colors[i-1]]=[colors[i-1],colors[i]];active=i-1;render();}
+    };
+    col.querySelectorAll(".iconBtn")[3].onclick=(e)=>{
+      e.stopPropagation();
+      if(i<colors.length-1){[colors[i],colors[i+1]]=[colors[i+1],colors[i]];active=i+1;render();}
+    };
+
+    // picker
+    col.querySelector("input[type=color]").oninput=(e)=>{
+      c.color=e.target.value.toUpperCase();
+      render();
+    };
+
+    // apply hex
+    col.querySelector(".editor button").onclick=(e)=>{
+      e.stopPropagation();
+      let val = col.querySelector("input[type=text]").value.toUpperCase().trim();
+      if(!val.startsWith("#")) val="#"+val;
+      if(/^#[0-9A-F]{6}$/.test(val)){
+        c.color=val;
+        render();
+      } else {
+        showToast("Invalid HEX");
+      }
+    };
+
+    // set active
+    col.onclick=()=>{active=i;render();};
+
+    palette.appendChild(col);
+  });
+}
+
+function generate(){
+  colors = colors.map(c => c.locked ? c : { ...c, color: randomHex() });
+  render();
+}
+
+// Header buttons
+document.getElementById("addBtn").onclick=()=>{
+  if(colors.length<10){
+    colors.push({color:randomHex(),locked:false});
+    active = colors.length-1;
+    render();
+  } else showToast("Max 10 colors");
+};
+
+document.getElementById("removeBtn").onclick=()=>{
+  if(colors.length>2){
+    colors.splice(active,1);
+    active = Math.max(0, active-1);
+    render();
+  } else showToast("Min 2 colors");
+};
+
+document.getElementById("exportBtn").onclick=exportHTML;
+
+// Keyboard shortcuts
+window.addEventListener("keydown",(e)=>{
+  if(e.target && (e.target.tagName==="INPUT" || e.target.tagName==="TEXTAREA")) return;
+
+  if(e.code==="Space"){
+    e.preventDefault();
+    generate();
+  }
+  if(e.key==="ArrowLeft" && active>0){ active--; render(); }
+  if(e.key==="ArrowRight" && active<colors.length-1){ active++; render(); }
+  if(e.key.toLowerCase()==="l"){ colors[active].locked=!colors[active].locked; render(); }
+  if(e.key.toLowerCase()==="e"){
+    const col = palette.children[active];
+    if(!col) return;
+    const ed = col.querySelector(".editor");
+    ed.style.display = (ed.style.display==="flex") ? "none" : "flex";
+  }
+});
+
+render();
+</script>
+
+</body>
+</html>

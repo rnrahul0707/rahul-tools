@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SVG Background Pattern Generator</title>
+<style>
+  body{margin:0;font-family:Arial;background:#f4f4f4;color:#111}
+  .wrap{max-width:1200px;margin:auto;padding:18px}
+  .header{
+    background:#fff;border:1px solid #e6e6e6;border-radius:14px;
+    padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    box-shadow:0 10px 25px rgba(0,0,0,.06)
+  }
+  .left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{
+    padding:10px 14px;border-radius:999px;border:1px solid #e6e6e6;background:#f3f3f3;
+    cursor:pointer;font-weight:800;text-decoration:none;color:#111
+  }
+  .btn:hover{background:#ededed}
+  .btn.primary{background:#000;color:#fff;border-color:#000}
+  .btn.primary:hover{opacity:.92}
+  h2{margin:0}
+  .credit{font-weight:800;color:#666;font-size:13px}
+
+  .grid{display:grid;grid-template-columns:440px 1fr;gap:14px;margin-top:14px}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    background:#fff;border:1px solid #e6e6e6;border-radius:14px;
+    padding:14px;box-shadow:0 10px 25px rgba(0,0,0,.06)
+  }
+
+  .preview{
+    border-radius:16px;border:1px solid rgba(0,0,0,.10);
+    height:560px;position:relative;overflow:hidden;
+    background:#fff;
+  }
+  .previewTop{
+    position:absolute;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;z-index:3
+  }
+  .pill{
+    padding:8px 10px;border-radius:999px;background:rgba(0,0,0,.75);color:#fff;
+    font-size:12px;font-weight:900
+  }
+  .previewArea{
+    position:absolute;inset:0;
+    background-size:auto;
+  }
+
+  .sectionTitle{font-size:12px;font-weight:900;color:#333;margin:12px 0 8px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  label{font-size:12px;font-weight:900;color:#333}
+  input[type="text"], select{
+    padding:10px 10px;border-radius:12px;border:1px solid #ddd;outline:none;
+    font-weight:800;width:100%
+  }
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  input[type="range"]{width:100%}
+  input[type="color"]{width:54px;height:42px;border:0;background:none;padding:0}
+
+  .layers{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .layer{
+    border:1px solid #e8e8e8;border-radius:14px;padding:10px;background:#fafafa
+  }
+  .layerHead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .layerName{font-weight:900}
+  .miniBtn{
+    padding:8px 10px;border-radius:12px;border:1px solid #ddd;background:#fff;
+    cursor:pointer;font-weight:900
+  }
+  .miniBtn:hover{background:#f1f1f1}
+  .miniBtn.danger{border-color:#f0b4b4}
+  .miniBtn.danger:hover{background:#fff0f0}
+  .miniBtn.dark{background:#000;color:#fff;border-color:#000}
+  .miniBtn.dark:hover{opacity:.92}
+
+  textarea{
+    width:100%;min-height:160px;resize:vertical;
+    padding:12px;border:1px solid #ddd;border-radius:12px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size:12px;line-height:1.4
+  }
+
+  .toast{
+    position:fixed;top:16px;right:16px;background:#000;color:#fff;
+    padding:10px 12px;border-radius:12px;font-weight:900;display:none;z-index:999
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="left">
+       <a href="../index.html">← Back to Home</a>
+      <h2>SVG Background Pattern Generator (Unlimited Layers)</h2>
+    </div>
+    <div class="row">
+      <button class="btn" id="randomBtn">Randomize</button>
+      <button class="btn" id="copyCssBtn">Copy CSS</button>
+      <button class="btn" id="copySvgBtn">Copy SVG</button>
+      <button class="btn primary" id="exportSvgBtn">Download SVG</button>
+      <button class="btn primary" id="exportPngBtn">Download PNG</button>
+      <div class="credit">© Rahul Negi 2026</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Controls -->
+    <div class="card">
+      <div class="sectionTitle">Canvas</div>
+      <div class="two">
+        <div class="field">
+          <label>Width</label>
+          <input type="text" id="cw" value="1920">
+        </div>
+        <div class="field">
+          <label>Height</label>
+          <input type="text" id="ch" value="1080">
+        </div>
+      </div>
+      <div class="two" style="margin-top:10px;">
+        <div class="field">
+          <label>Background Base</label>
+          <div class="row">
+            <input type="color" id="baseColor" value="#FFFFFF">
+            <input type="text" id="baseHex" value="#FFFFFF" maxlength="7">
+          </div>
+        </div>
+        <div class="field">
+          <label>Preview Zoom</label>
+          <input type="range" id="zoom" min="0.4" max="2" step="0.1" value="1">
+        </div>
+      </div>
+
+      <div class="sectionTitle">Layers</div>
+      <div class="row">
+        <button class="miniBtn dark" id="addLayerBtn">+ Add Layer</button>
+        <button class="miniBtn" id="clearLayersBtn">Clear</button>
+      </div>
+
+      <div class="layers" id="layers"></div>
+
+      <div class="sectionTitle">Output (Live)</div>
+      <textarea id="outSvg" readonly></textarea>
+      <div class="row">
+        <button class="miniBtn" id="copyOutSvgBtn">Copy</button>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card">
+      <div class="preview">
+        <div class="previewTop">
+          <div class="pill" id="pillInfo">Ready</div>
+          <div class="pill" id="pillLayers">Layers: 0</div>
+        </div>
+        <div class="previewArea" id="previewArea"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied ✅</div>
+
+<script>
+  // ---------- Helpers ----------
+  const $ = (id)=>document.getElementById(id);
+  const toast = $("toast");
+  function showToast(msg="Done ✅"){
+    toast.textContent = msg;
+    toast.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.style.display="none", 900);
+  }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+  function normHex(v){
+    v = (v||"").trim().toUpperCase();
+    if (!v.startsWith("#")) v = "#"+v;
+    return /^#[0-9A-F]{6}$/.test(v) ? v : null;
+  }
+  function randHex(){
+    const n=()=>Math.floor(Math.random()*256).toString(16).padStart(2,"0");
+    return ("#"+n()+n()+n()).toUpperCase();
+  }
+  function uid(){ return Math.random().toString(16).slice(2,10); }
+
+  async function copyText(t){
+    try{ await navigator.clipboard.writeText(t); showToast("Copied ✅"); }
+    catch{
+      const ta=document.createElement("textarea");
+      ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+      showToast("Copied ✅");
+    }
+  }
+
+  // ---------- State ----------
+  const patterns = [
+    { id:"dots", name:"Dots" },
+    { id:"grid", name:"Grid" },
+    { id:"diag", name:"Diagonal Lines" },
+    { id:"checker", name:"Checker" },
+    { id:"zigzag", name:"Zigzag" },
+    { id:"waves", name:"Waves" },
+  ];
+
+  let layers = [
+    makeLayer("dots"),
+    makeLayer("diag"),
+  ];
+
+  function makeLayer(type){
+    return {
+      key: uid(),
+      type,
+      color: randHex(),
+      opacity: 0.35,
+      size: 64,       // pattern tile size
+      stroke: 6,      // for lines/waves/grid
+      rotate: 0,      // deg
+      offsetX: 0,
+      offsetY: 0,
+      enabled: true
+    };
+  }
+
+  // ---------- UI Build ----------
+  function layerCardHTML(layer, idx){
+    const opts = patterns.map(p=>`<option value="${p.id}" ${p.id===layer.type?"selected":""}>${p.name}</option>`).join("");
+    return `
+      <div class="layer" data-key="${layer.key}">
+        <div class="layerHead">
+          <div class="layerName">Layer ${idx+1}</div>
+          <div class="row">
+            <button class="miniBtn" data-act="up" title="Move up">↑</button>
+            <button class="miniBtn" data-act="down" title="Move down">↓</button>
+            <button class="miniBtn" data-act="toggle" title="Enable/Disable">${layer.enabled ? "ON" : "OFF"}</button>
+            <button class="miniBtn danger" data-act="del" title="Delete">Delete</button>
+          </div>
+        </div>
+
+        <div class="two" style="margin-top:10px;">
+          <div class="field">
+            <label>Pattern</label>
+            <select data-act="type">${opts}</select>
+          </div>
+          <div class="field">
+            <label>Color</label>
+            <div class="row">
+              <input type="color" data-act="colorPick" value="${layer.color}">
+              <input type="text" data-act="colorHex" value="${layer.color}" maxlength="7">
+            </div>
+          </div>
+        </div>
+
+        <div class="three" style="margin-top:10px;">
+          <div class="field">
+            <label>Opacity (${layer.opacity})</label>
+            <input type="range" data-act="opacity" min="0" max="1" step="0.05" value="${layer.opacity}">
+          </div>
+          <div class="field">
+            <label>Size (${layer.size}px)</label>
+            <input type="range" data-act="size" min="12" max="220" step="2" value="${layer.size}">
+          </div>
+          <div class="field">
+            <label>Stroke (${layer.stroke}px)</label>
+            <input type="range" data-act="stroke" min="1" max="40" step="1" value="${layer.stroke}">
+          </div>
+        </div>
+
+        <div class="three" style="margin-top:10px;">
+          <div class="field">
+            <label>Rotate (${layer.rotate}°)</label>
+            <input type="range" data-act="rotate" min="0" max="360" step="5" value="${layer.rotate}">
+          </div>
+          <div class="field">
+            <label>Offset X (${layer.offsetX}px)</label>
+            <input type="range" data-act="offx" min="-200" max="200" step="5" value="${layer.offsetX}">
+          </div>
+          <div class="field">
+            <label>Offset Y (${layer.offsetY}px)</label>
+            <input type="range" data-act="offy" min="-200" max="200" step="5" value="${layer.offsetY}">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLayerUI(){
+    const el = $("layers");
+    el.innerHTML = layers.map((l,i)=>layerCardHTML(l,i)).join("");
+
+    el.querySelectorAll(".layer").forEach((card)=>{
+      const key = card.getAttribute("data-key");
+      const L = layers.find(x=>x.key===key);
+
+      card.querySelectorAll("[data-act]").forEach((ctrl)=>{
+        const act = ctrl.getAttribute("data-act");
+
+        ctrl.addEventListener("click", (e)=>{
+          if (act==="del"){
+            layers = layers.filter(x=>x.key!==key);
+            renderLayerUI(); updateAll();
+          }
+          if (act==="up"){
+            const i = layers.findIndex(x=>x.key===key);
+            if (i>0){ [layers[i-1],layers[i]]=[layers[i],layers[i-1]]; renderLayerUI(); updateAll(); }
+          }
+          if (act==="down"){
+            const i = layers.findIndex(x=>x.key===key);
+            if (i<layers.length-1){ [layers[i+1],layers[i]]=[layers[i],layers[i+1]]; renderLayerUI(); updateAll(); }
+          }
+          if (act==="toggle"){
+            L.enabled = !L.enabled;
+            renderLayerUI(); updateAll();
+          }
+        });
+
+        ctrl.addEventListener("input", ()=>{
+          // inputs
+          if (act==="type"){ L.type = ctrl.value; updateAll(); renderLayerUI(); return; }
+
+          if (act==="colorPick"){
+            L.color = ctrl.value.toUpperCase();
+            card.querySelector('[data-act="colorHex"]').value = L.color;
+            updateAll();
+          }
+          if (act==="colorHex"){
+            const h = normHex(ctrl.value);
+            if (h){ L.color = h; card.querySelector('[data-act="colorPick"]').value = h; updateAll(); }
+          }
+
+          if (act==="opacity"){ L.opacity = Number(ctrl.value); updateAll(); renderLayerUI(); }
+          if (act==="size"){ L.size = Number(ctrl.value); updateAll(); renderLayerUI(); }
+          if (act==="stroke"){ L.stroke = Number(ctrl.value); updateAll(); renderLayerUI(); }
+          if (act==="rotate"){ L.rotate = Number(ctrl.value); updateAll(); renderLayerUI(); }
+          if (act==="offx"){ L.offsetX = Number(ctrl.value); updateAll(); renderLayerUI(); }
+          if (act==="offy"){ L.offsetY = Number(ctrl.value); updateAll(); renderLayerUI(); }
+        });
+      });
+    });
+
+    $("pillLayers").textContent = `Layers: ${layers.length}`;
+  }
+
+  // ---------- SVG pattern generators ----------
+  function patternMarkup(layer, idx){
+    const tile = layer.size;
+    const c = layer.color;
+    const op = layer.opacity;
+    const sw = layer.stroke;
+
+    const pid = `p_${idx}_${layer.key}`;
+    const tx = layer.offsetX, ty = layer.offsetY;
+
+    // Wrap each layer fill into a group with transform (rotate about center of tile)
+    const rot = layer.rotate;
+    const cx = tile/2, cy = tile/2;
+
+    let content = "";
+
+    if (layer.type === "dots"){
+      const r = Math.max(1, Math.floor(sw/2));
+      content = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" fill-opacity="${op}"/>`;
+    }
+
+    if (layer.type === "grid"){
+      // draw vertical and horizontal lines inside tile
+      content = `
+        <path d="M ${tile} 0 V ${tile} M 0 ${tile} H ${tile}"
+              stroke="${c}" stroke-opacity="${op}" stroke-width="${Math.max(1, sw/3)}" />
+      `;
+    }
+
+    if (layer.type === "diag"){
+      // diagonal line across tile; repeating creates stripes
+      content = `
+        <path d="M -${tile} ${tile} L ${tile} -${tile} M 0 ${tile} L ${tile} 0 M -${tile} 2${tile} L 2${tile} -${tile}"
+              stroke="${c}" stroke-opacity="${op}" stroke-width="${sw}" />
+      `;
+    }
+
+    if (layer.type === "checker"){
+      const half = tile/2;
+      content = `
+        <rect x="0" y="0" width="${half}" height="${half}" fill="${c}" fill-opacity="${op}"/>
+        <rect x="${half}" y="${half}" width="${half}" height="${half}" fill="${c}" fill-opacity="${op}"/>
+      `;
+    }
+
+    if (layer.type === "zigzag"){
+      const h = tile;
+      const step = tile/4;
+      const yMid = h/2;
+      const d = `M 0 ${yMid}
+                 L ${step} ${yMid - step}
+                 L ${2*step} ${yMid}
+                 L ${3*step} ${yMid - step}
+                 L ${4*step} ${yMid}`;
+      content = `<path d="${d}" fill="none" stroke="${c}" stroke-opacity="${op}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+    }
+
+    if (layer.type === "waves"){
+      const h = tile;
+      const a = tile/6;
+      const y = h/2;
+      const d = `M 0 ${y}
+                 C ${tile/4} ${y-a}, ${tile/4} ${y+a}, ${tile/2} ${y}
+                 C ${3*tile/4} ${y-a}, ${3*tile/4} ${y+a}, ${tile} ${y}`;
+      content = `<path d="${d}" fill="none" stroke="${c}" stroke-opacity="${op}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    }
+
+    // pattern with optional translation and rotation
+    return `
+      <pattern id="${pid}" patternUnits="userSpaceOnUse" width="${tile}" height="${tile}" x="${tx}" y="${ty}">
+        <g transform="rotate(${rot} ${cx} ${cy})">
+          ${content}
+        </g>
+      </pattern>
+    `;
+  }
+
+  function buildSVG(){
+    const w = parseInt($("cw").value || "1920", 10);
+    const h = parseInt($("ch").value || "1080", 10);
+
+    const base = normHex($("baseHex").value) || $("baseColor").value.toUpperCase();
+    $("baseHex").value = base;
+    $("baseColor").value = base;
+
+    const enabledLayers = layers.filter(l=>l.enabled);
+
+    const defs = enabledLayers.map((l,i)=>patternMarkup(l,i)).join("\n");
+    const rects = enabledLayers.map((l,i)=>`<rect x="0" y="0" width="${w}" height="${h}" fill="url(#p_${i}_${l.key})"/>`).join("\n");
+
+    const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+${defs}
+  </defs>
+  <rect x="0" y="0" width="${w}" height="${h}" fill="${base}"/>
+${rects}
+</svg>`;
+
+    return { svg, w, h };
+  }
+
+  // Encode for CSS background-image
+  function svgToDataUri(svg){
+    // compact a bit
+    const cleaned = svg
+      .replace(/\n+/g,"")
+      .replace(/\s{2,}/g," ")
+      .replace(/>\s+</g,"><")
+      .trim();
+
+    const encoded = encodeURIComponent(cleaned)
+      .replace(/%20/g," ")
+      .replace(/%3D/g,"=")
+      .replace(/%3A/g,":")
+      .replace(/%2F/g,"/")
+      .replace(/%2C/g,",")
+      .replace(/%3B/g,";");
+
+    return `data:image/svg+xml,${encoded}`;
+  }
+
+  function updateAll(){
+    const { svg, w, h } = buildSVG();
+    $("outSvg").value = svg;
+
+    // preview
+    const uri = svgToDataUri(svg);
+    const z = Number($("zoom").value);
+    const area = $("previewArea");
+    area.style.backgroundColor = $("baseHex").value;
+    area.style.backgroundImage = `url("${uri}")`;
+    area.style.transformOrigin = "top left";
+    area.style.transform = `scale(${z})`;
+    area.style.width = `${100/z}%`;
+    area.style.height = `${100/z}%`;
+
+    $("pillInfo").textContent = `${w}×${h} • ${layers.filter(l=>l.enabled).length} active`;
+  }
+
+  // ---------- Export / Copy ----------
+  function downloadSVG(){
+    const { svg } = buildSVG();
+    const blob = new Blob([svg], {type:"image/svg+xml"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "pattern.svg"; a.click();
+    URL.revokeObjectURL(url);
+    showToast("SVG downloaded ✅");
+  }
+
+  function downloadPNG(){
+    const { svg, w, h } = buildSVG();
+    const img = new Image();
+    const svgBlob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      // draw background (already in svg, but safe)
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((blob)=>{
+        const pngUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = pngUrl; a.download = "pattern.png"; a.click();
+        URL.revokeObjectURL(pngUrl);
+        showToast("PNG downloaded ✅");
+      }, "image/png");
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); alert("PNG export failed"); };
+    img.src = url;
+  }
+
+  function copyCSS(){
+    const { svg } = buildSVG();
+    const uri = svgToDataUri(svg);
+    const css = `background-color: ${$("baseHex").value};\nbackground-image: url("${uri}");\nbackground-repeat: repeat;`;
+    copyText(css);
+  }
+
+  // ---------- Randomize ----------
+  function randomize(){
+    // randomize base + each enabled layer
+    $("baseHex").value = randHex();
+    $("baseColor").value = $("baseHex").value;
+
+    layers = layers.map(l => ({
+      ...l,
+      color: randHex(),
+      opacity: Number((Math.random()*0.7 + 0.15).toFixed(2)),
+      size: Math.floor(Math.random()*140 + 24),
+      stroke: Math.floor(Math.random()*18 + 2),
+      rotate: [0,15,30,45,60,90,120,180,240,270,300,360][Math.floor(Math.random()*12)],
+      offsetX: Math.floor(Math.random()*121 - 60),
+      offsetY: Math.floor(Math.random()*121 - 60),
+      type: patterns[Math.floor(Math.random()*patterns.length)].id,
+      enabled: true
+    }));
+
+    renderLayerUI();
+    updateAll();
+    showToast("Randomized ✅");
+  }
+
+  // ---------- Wire up canvas inputs ----------
+  $("baseColor").addEventListener("input", ()=>{
+    $("baseHex").value = $("baseColor").value.toUpperCase();
+    updateAll();
+  });
+  $("baseHex").addEventListener("input", ()=>{
+    const h = normHex($("baseHex").value);
+    if (h){ $("baseHex").value = h; $("baseColor").value = h; updateAll(); }
+  });
+  $("cw").addEventListener("input", updateAll);
+  $("ch").addEventListener("input", updateAll);
+  $("zoom").addEventListener("input", updateAll);
+
+  // ---------- Buttons ----------
+  $("addLayerBtn").addEventListener("click", ()=>{
+    layers.unshift(makeLayer(patterns[Math.floor(Math.random()*patterns.length)].id));
+    renderLayerUI(); updateAll();
+  });
+  $("clearLayersBtn").addEventListener("click", ()=>{
+    layers = [];
+    renderLayerUI(); updateAll();
+  });
+
+  $("randomBtn").addEventListener("click", randomize);
+  $("copyCssBtn").addEventListener("click", copyCSS);
+  $("copySvgBtn").addEventListener("click", ()=>copyText(buildSVG().svg));
+  $("copyOutSvgBtn").addEventListener("click", ()=>copyText($("outSvg").value));
+  $("exportSvgBtn").addEventListener("click", downloadSVG);
+  $("exportPngBtn").addEventListener("click", downloadPNG);
+
+  // ---------- Init ----------
+  // Set base sync
+  $("baseHex").value = $("baseColor").value.toUpperCase();
+  renderLayerUI();
+  updateAll();
+</script>
+</body>
+</html>

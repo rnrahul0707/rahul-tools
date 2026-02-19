@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Glassmorphism Generator</title>
+<style>
+  body{margin:0;font-family:Arial;background:#f4f4f4;color:#111}
+  .wrap{max-width:1200px;margin:auto;padding:18px}
+  .header{
+    background:#fff;border:1px solid #e6e6e6;border-radius:14px;
+    padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    box-shadow:0 10px 25px rgba(0,0,0,.06)
+  }
+  .left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{
+    padding:10px 14px;border-radius:999px;border:1px solid #e6e6e6;background:#f3f3f3;
+    cursor:pointer;font-weight:800;text-decoration:none;color:#111
+  }
+  .btn:hover{background:#ededed}
+  .btn.primary{background:#000;color:#fff;border-color:#000}
+  .btn.primary:hover{opacity:.92}
+  h2{margin:0}
+  .credit{font-weight:800;color:#666;font-size:13px}
+
+  .grid{display:grid;grid-template-columns:460px 1fr;gap:14px;margin-top:14px}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    background:#fff;border:1px solid #e6e6e6;border-radius:14px;
+    padding:14px;box-shadow:0 10px 25px rgba(0,0,0,.06)
+  }
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+  label{font-size:12px;font-weight:900;color:#333}
+  input[type="range"]{width:100%}
+  input[type="text"], select{
+    padding:10px 10px;border-radius:12px;border:1px solid #ddd;outline:none;
+    font-weight:900
+  }
+  input[type="color"]{width:54px;height:44px;border:0;background:none;padding:0}
+  .hint{font-size:12px;color:#666;font-weight:700;margin-top:6px;line-height:1.4}
+
+  textarea{
+    width:100%;min-height:170px;resize:vertical;
+    padding:12px;border:1px solid #ddd;border-radius:12px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size:12px;line-height:1.45
+  }
+
+  /* Toggle pills */
+  .seg{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .seg button{
+    padding:10px 14px;border-radius:999px;border:1px solid #ddd;background:#fff;
+    font-weight:900;cursor:pointer
+  }
+  .seg button.active{background:#000;color:#fff;border-color:#000}
+
+  /* Preview */
+  .previewArea{
+    border-radius:16px;border:1px solid rgba(0,0,0,.10);
+    height:620px;position:relative;overflow:hidden;
+    background: linear-gradient(135deg,#7c3aed,#06b6d4,#f43f5e);
+  }
+  .blob{
+    position:absolute;filter:blur(40px);opacity:.75;border-radius:999px;
+    pointer-events:none;
+  }
+  .b1{width:340px;height:340px;left:-70px;top:40px;background:#22c55e}
+  .b2{width:380px;height:380px;right:-120px;top:80px;background:#f59e0b}
+  .b3{width:360px;height:360px;left:120px;bottom:-160px;background:#3b82f6}
+
+  .noise{
+    position:absolute;inset:0;pointer-events:none;opacity:.0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+  }
+
+  .glassWrap{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;
+    pointer-events:none;
+  }
+  .glassCard{
+    pointer-events:auto;
+    width:min(520px, 95%);
+    border-radius:22px;
+    padding:22px;
+    border:1px solid rgba(255,255,255,.35);
+    background: rgba(255,255,255,.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    color:#0b0b0b;
+  }
+  .glassTitle{font-size:26px;font-weight:900;margin:0 0 8px 0}
+  .glassSub{margin:0 0 16px 0;color:rgba(0,0,0,.7);font-weight:700;line-height:1.45}
+  .pillRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .pill{
+    padding:10px 12px;border-radius:999px;
+    background:rgba(255,255,255,.25);
+    border:1px solid rgba(255,255,255,.35);
+    font-weight:900
+  }
+
+  .toast{
+    position:fixed;top:16px;right:16px;background:#000;color:#fff;
+    padding:10px 12px;border-radius:12px;font-weight:900;display:none;z-index:999
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="left">
+<a href="../index.html">← Back to Home</a>
+      <h2>Glassmorphism Generator</h2>
+    </div>
+    <div class="row">
+      <button class="btn" id="copyBtn">Copy CSS</button>
+      <button class="btn" id="pngBtn">Export PNG</button>
+      <button class="btn" id="jpgBtn">Export JPG</button>
+      <button class="btn" id="svgBtn">Export SVG</button>
+      <button class="btn primary" id="exportBtn">Export HTML</button>
+      <div class="credit">© Rahul Negi 2026</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Controls -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:900">Export Mode</div>
+        <div class="seg">
+          <button id="mBg" class="active">BG Only</button>
+          <button id="mCard">Card Only</button>
+          <button id="mBoth">BG + Card</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;justify-content:space-between">
+        <div class="row" style="align-items:center">
+          <input type="checkbox" id="noiseOn" />
+          <label for="noiseOn" style="margin:0;font-size:12px;font-weight:900">Grain / Noise</label>
+        </div>
+        <div class="hint">PNG/JPG uses Canvas render.</div>
+      </div>
+
+      <div class="hint" style="margin-top:8px">
+        BG Only = export background image. Card Only = export transparent card. BG+Card = full scene.
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div class="field">
+          <label>Blur (px)</label>
+          <input type="range" id="blur" min="0" max="40" step="1" value="16">
+        </div>
+        <div class="field">
+          <label>Opacity</label>
+          <input type="range" id="opacity" min="0.05" max="0.5" step="0.01" value="0.18">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Radius (px)</label>
+          <input type="range" id="radius" min="6" max="60" step="1" value="22">
+        </div>
+        <div class="field">
+          <label>Border Opacity</label>
+          <input type="range" id="borderOp" min="0" max="0.8" step="0.02" value="0.35">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Shadow Strength</label>
+          <input type="range" id="shadow" min="0" max="0.45" step="0.01" value="0.22">
+        </div>
+        <div class="field">
+          <label>Glass Tint</label>
+          <div class="row">
+            <input type="color" id="tintPick" value="#FFFFFF">
+            <input type="text" id="tintHex" value="#FFFFFF" maxlength="7">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Text Color</label>
+          <div class="row">
+            <input type="color" id="textPick" value="#0B0B0B">
+            <input type="text" id="textHex" value="#0B0B0B" maxlength="7">
+          </div>
+        </div>
+        <div class="field">
+          <label>Subtext Color</label>
+          <input type="range" id="subAlpha" min="0.3" max="0.9" step="0.02" value="0.70">
+        </div>
+      </div>
+
+      <!-- Card text -->
+      <div class="hint" style="margin-top:10px"><b>Card Content</b></div>
+      <div class="row" style="margin-top:8px">
+        <div class="field">
+          <label>Title</label>
+          <input type="text" id="titleIn" value="Glass Card">
+        </div>
+        <div class="field">
+          <label>Subtitle</label>
+          <input type="text" id="subIn" value="Blur + transparency + border + soft shadow. Adjust sliders to match your UI.">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="min-width:100%">
+          <label>Pills (comma separated)</label>
+          <input type="text" id="pillsIn" value="Button, Card, Modal, Navbar">
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:10px"><b>Background Gradient</b></div>
+      <div class="row" style="margin-top:8px">
+        <div class="field">
+          <label>Color A</label>
+          <div class="row">
+            <input type="color" id="bgA" value="#B4A5CF">
+            <input type="text" id="bgAHex" value="#B4A5CF" maxlength="7">
+          </div>
+        </div>
+        <div class="field">
+          <label>Color B</label>
+          <div class="row">
+            <input type="color" id="bgB" value="#41D2EC">
+            <input type="text" id="bgBHex" value="#41D2EC" maxlength="7">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Color C</label>
+          <div class="row">
+            <input type="color" id="bgC" value="#F43F5E">
+            <input type="text" id="bgCHex" value="#F43F5E" maxlength="7">
+          </div>
+        </div>
+        <div class="field">
+          <label>Angle (deg)</label>
+          <input type="range" id="angle" min="0" max="360" step="5" value="135">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;font-size:12px;font-weight:900;color:#333;">CSS Output</div>
+      <textarea id="cssOut" readonly></textarea>
+      <div class="hint">SVG export is “approx” (blur not exact). PNG/JPG are accurate.</div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card">
+      <div class="previewArea" id="previewBg">
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
+        <div class="blob b3"></div>
+        <div class="noise" id="noise"></div>
+
+        <div class="glassWrap" id="cardWrap">
+          <div class="glassCard" id="glass">
+            <div class="glassTitle" id="titleTxt">Glass Card</div>
+            <p class="glassSub" id="subTxt">
+              Blur + transparency + border + soft shadow. Adjust sliders to match your UI.
+            </p>
+            <div class="pillRow" id="pillRow"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:10px">
+        Tip: Opacity 0.12–0.22 + Blur 14–22 = clean UI.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Done ✅</div>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+  const toast = $("toast");
+
+  let exportMode = "bg"; // bg | card | both
+
+  function showToast(msg="Done ✅"){
+    toast.textContent = msg;
+    toast.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.style.display="none", 1000);
+  }
+
+  function normHex(v){
+    v=(v||"").trim().toUpperCase();
+    if(!v.startsWith("#")) v="#"+v;
+    return /^#[0-9A-F]{6}$/.test(v) ? v : null;
+  }
+
+  function hexToRgb(hex){
+    return {
+      r: parseInt(hex.slice(1,3),16),
+      g: parseInt(hex.slice(3,5),16),
+      b: parseInt(hex.slice(5,7),16),
+    };
+  }
+
+  function rgba(hex, a){
+    const {r,g,b} = hexToRgb(hex);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+
+  function syncColor(pickId, hexId, onChange){
+    $(pickId).addEventListener("input", ()=>{
+      $(hexId).value = $(pickId).value.toUpperCase();
+      onChange();
+    });
+    $(hexId).addEventListener("input", ()=>{
+      const h = normHex($(hexId).value);
+      if(h){ $(hexId).value=h; $(pickId).value=h; onChange(); }
+    });
+  }
+
+  // Mode UI
+  function setMode(m){
+    exportMode = m;
+    $("mBg").classList.toggle("active", m==="bg");
+    $("mCard").classList.toggle("active", m==="card");
+    $("mBoth").classList.toggle("active", m==="both");
+
+    // show/hide card in preview
+    $("cardWrap").style.display = (m==="bg") ? "none" : "flex";
+    update();
+  }
+  $("mBg").onclick = ()=>setMode("bg");
+  $("mCard").onclick = ()=>setMode("card");
+  $("mBoth").onclick = ()=>setMode("both");
+
+  // sync colors
+  syncColor("tintPick","tintHex", update);
+  syncColor("textPick","textHex", update);
+  syncColor("bgA","bgAHex", update);
+  syncColor("bgB","bgBHex", update);
+  syncColor("bgC","bgCHex", update);
+
+  ["blur","opacity","radius","borderOp","shadow","subAlpha","angle","noiseOn","titleIn","subIn","pillsIn"].forEach(id=>{
+    $(id).addEventListener("input", update);
+    $(id).addEventListener("change", update);
+  });
+
+  function renderPills(){
+    const raw = ($("pillsIn").value || "").split(",").map(s=>s.trim()).filter(Boolean);
+    const row = $("pillRow");
+    row.innerHTML = raw.slice(0,10).map(t=>`<div class="pill">${escapeHtml(t)}</div>`).join("");
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  function update(){
+    const blur = Number($("blur").value);
+    const op = Number($("opacity").value);
+    const radius = Number($("radius").value);
+    const borderOp = Number($("borderOp").value);
+    const shadow = Number($("shadow").value);
+    const subA = Number($("subAlpha").value);
+
+    const tint = normHex($("tintHex").value) || "#FFFFFF";
+    const text = normHex($("textHex").value) || "#0B0B0B";
+
+    const bgA = normHex($("bgAHex").value) || "#B4A5CF";
+    const bgB = normHex($("bgBHex").value) || "#41D2EC";
+    const bgC = normHex($("bgCHex").value) || "#F43F5E";
+    const ang = Number($("angle").value);
+
+    const glass = $("glass");
+    const bg = $("previewBg");
+    const sub = $("subTxt");
+    const noise = $("noise");
+
+    // background
+    bg.style.background = `linear-gradient(${ang}deg, ${bgA}, ${bgB}, ${bgC})`;
+
+    // noise
+    noise.style.opacity = $("noiseOn").checked ? "0.18" : "0";
+
+    // card content
+    $("titleTxt").textContent = $("titleIn").value || "Glass Card";
+    $("subTxt").textContent = $("subIn").value || "";
+    renderPills();
+
+    // glass card style
+    glass.style.borderRadius = radius + "px";
+    glass.style.background = rgba(tint, op);
+    glass.style.border = `1px solid ${rgba("#FFFFFF", borderOp)}`;
+    glass.style.backdropFilter = `blur(${blur}px)`;
+    glass.style.webkitBackdropFilter = `blur(${blur}px)`;
+    glass.style.boxShadow = `0 20px 60px rgba(0,0,0,${shadow})`;
+    glass.style.color = text;
+    sub.style.color = rgba(text, subA);
+
+    const css =
+`/* Glassmorphism */
+.glass{
+  background: ${rgba(tint, op)};
+  border: 1px solid ${rgba("#FFFFFF", borderOp)};
+  border-radius: ${radius}px;
+  box-shadow: 0 20px 60px rgba(0,0,0,${shadow});
+  backdrop-filter: blur(${blur}px);
+  -webkit-backdrop-filter: blur(${blur}px);
+}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
+  .glass{ background: ${rgba(tint, Math.min(0.55, op+0.25))}; }
+}`;
+    $("cssOut").value = css;
+  }
+
+  async function copyCSS(){
+    try{ await navigator.clipboard.writeText($("cssOut").value); showToast("CSS Copied ✅"); }
+    catch{ showToast("Copy failed"); }
+  }
+
+  function downloadFile(name, content, type){
+    const blob = new Blob([content], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ===== Canvas export helpers =====
+  function makeCanvas(w=1600,h=900){
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    return c;
+  }
+
+  // draw soft blobs + gradient background (approx of preview)
+  function drawBackground(ctx, w, h, opts){
+    // gradient
+    const rad = (opts.angle||135) * Math.PI / 180;
+    const x = Math.cos(rad), y = Math.sin(rad);
+    const g = ctx.createLinearGradient(
+      w/2 - x*w/2, h/2 - y*h/2,
+      w/2 + x*w/2, h/2 + y*h/2
+    );
+    g.addColorStop(0, opts.bgA);
+    g.addColorStop(0.5, opts.bgB);
+    g.addColorStop(1, opts.bgC);
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+
+    // blobs (approx)
+    function blob(cx, cy, r, color, alpha){
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const rg = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+      rg.addColorStop(0, color);
+      rg.addColorStop(1, "transparent");
+      ctx.fillStyle = rg;
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    blob(w*0.18, h*0.32, Math.min(w,h)*0.35, "#22c55e", 0.55);
+    blob(w*0.86, h*0.32, Math.min(w,h)*0.38, "#f59e0b", 0.55);
+    blob(w*0.48, h*0.92, Math.min(w,h)*0.42, "#3b82f6", 0.55);
+
+    // noise
+    if(opts.noise){
+      ctx.save();
+      ctx.globalAlpha = 0.10;
+      for(let i=0;i<9000;i++){
+        const px = Math.random()*w;
+        const py = Math.random()*h;
+        const a = Math.random()*0.6;
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fillRect(px,py,1,1);
+      }
+      ctx.restore();
+    }
+  }
+
+  function measureWrapText(ctx, text, maxWidth){
+    const words = text.split(" ");
+    const lines = [];
+    let line = "";
+    for(const w of words){
+      const test = (line ? line+" " : "") + w;
+      if(ctx.measureText(test).width > maxWidth && line){
+        lines.push(line);
+        line = w;
+      }else{
+        line = test;
+      }
+    }
+    if(line) lines.push(line);
+    return lines;
+  }
+
+  function drawRoundedRect(ctx, x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  // NOTE: Canvas cannot truly do backdrop-filter blur of background behind card.
+  // We approximate by drawing the card with translucency + border + shadow.
+  function drawCard(ctx, w, h, opts){
+    const cardW = Math.min(980, w*0.78);
+    const cardH = Math.min(320, h*0.44);
+    const x = (w-cardW)/2;
+    const y = (h-cardH)/2;
+
+    // shadow
+    ctx.save();
+    ctx.shadowColor = `rgba(0,0,0,${opts.shadow})`;
+    ctx.shadowBlur = 60;
+    ctx.shadowOffsetY = 20;
+
+    // glass bg
+    ctx.fillStyle = rgba(opts.tint, opts.opacity);
+    drawRoundedRect(ctx, x,y,cardW,cardH,opts.radius);
+    ctx.fill();
+    ctx.restore();
+
+    // border
+    ctx.strokeStyle = rgba("#FFFFFF", opts.borderOp);
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, x,y,cardW,cardH,opts.radius);
+    ctx.stroke();
+
+    // text
+    const textColor = opts.text;
+    ctx.fillStyle = textColor;
+    ctx.font = "900 52px Arial";
+    ctx.fillText(opts.title, x+48, y+84);
+
+    ctx.font = "700 26px Arial";
+    ctx.fillStyle = rgba(textColor, opts.subAlpha);
+    const subLines = measureWrapText(ctx, opts.sub, cardW-96);
+    let ty = y+132;
+    subLines.slice(0,3).forEach(line=>{
+      ctx.fillText(line, x+48, ty);
+      ty += 34;
+    });
+
+    // pills
+    const pills = opts.pills.slice(0,6);
+    let px = x+48, py = y+cardH-74;
+    ctx.font = "900 24px Arial";
+    pills.forEach(p=>{
+      const padX=18, padY=12;
+      const tw = ctx.measureText(p).width;
+      const bw = tw + padX*2;
+      const bh = 46;
+
+      // next row if needed
+      if(px + bw > x+cardW-48){
+        px = x+48;
+        py += 56;
+      }
+
+      // pill bg
+      ctx.fillStyle = rgba("#FFFFFF", 0.22);
+      ctx.strokeStyle = rgba("#FFFFFF", opts.borderOp);
+      ctx.lineWidth = 2;
+      drawRoundedRect(ctx, px, py- bh + 10, bw, bh, 999);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = textColor;
+      ctx.fillText(p, px+padX, py);
+      px += bw + 14;
+    });
+  }
+
+  function getOpts(){
+    return {
+      blur: Number($("blur").value),
+      opacity: Number($("opacity").value),
+      radius: Number($("radius").value),
+      borderOp: Number($("borderOp").value),
+      shadow: Number($("shadow").value),
+      tint: normHex($("tintHex").value) || "#FFFFFF",
+      text: normHex($("textHex").value) || "#0B0B0B",
+      subAlpha: Number($("subAlpha").value),
+      bgA: normHex($("bgAHex").value) || "#B4A5CF",
+      bgB: normHex($("bgBHex").value) || "#41D2EC",
+      bgC: normHex($("bgCHex").value) || "#F43F5E",
+      angle: Number($("angle").value),
+      noise: $("noiseOn").checked,
+      title: $("titleIn").value || "Glass Card",
+      sub: $("subIn").value || "",
+      pills: ($("pillsIn").value||"").split(",").map(s=>s.trim()).filter(Boolean)
+    };
+  }
+
+  function exportCanvasImage(type){
+    const opts = getOpts();
+
+    // 16:9 nice for backgrounds
+    const canvas = makeCanvas(1600, 900);
+    const ctx = canvas.getContext("2d");
+
+    if(exportMode==="bg" || exportMode==="both"){
+      drawBackground(ctx, canvas.width, canvas.height, opts);
+    }else{
+      // card-only transparent base
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+
+    if(exportMode==="card" || exportMode==="both"){
+      drawCard(ctx, canvas.width, canvas.height, opts);
+    }
+
+    if(type==="png"){
+      downloadFile("glass-export.png", atob(canvas.toDataURL("image/png").split(",")[1]).split("").map(c=>c.charCodeAt(0)), "application/octet-stream");
+    }
+  }
+
+  // safer download (binary)
+  function downloadDataURL(filename, dataURL){
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = filename;
+    a.click();
+  }
+
+  function exportPNG(){
+    const opts = getOpts();
+    const canvas = makeCanvas(1600, 900);
+    const ctx = canvas.getContext("2d");
+
+    if(exportMode==="bg" || exportMode==="both"){
+      drawBackground(ctx, canvas.width, canvas.height, opts);
+    }else{
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+    if(exportMode==="card" || exportMode==="both"){
+      drawCard(ctx, canvas.width, canvas.height, opts);
+    }
+
+    downloadDataURL("glass-export.png", canvas.toDataURL("image/png"));
+    showToast("PNG Exported ✅");
+  }
+
+  function exportJPG(){
+    const opts = getOpts();
+    const canvas = makeCanvas(1600, 900);
+    const ctx = canvas.getContext("2d");
+
+    // JPG cannot be transparent, so if card-only -> use white base
+    if(exportMode==="card"){
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      drawCard(ctx, canvas.width, canvas.height, opts);
+    }else{
+      drawBackground(ctx, canvas.width, canvas.height, opts);
+      if(exportMode==="both") drawCard(ctx, canvas.width, canvas.height, opts);
+    }
+
+    downloadDataURL("glass-export.jpg", canvas.toDataURL("image/jpeg", 0.92));
+    showToast("JPG Exported ✅");
+  }
+
+  function exportSVG(){
+    const o = getOpts();
+    // SVG approximate: gradient + card (no real backdrop blur)
+    const w=1600,h=900;
+    const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+    <linearGradient id="bg" gradientUnits="userSpaceOnUse"
+      x1="0" y1="0" x2="${w}" y2="${h}">
+      <stop offset="0%" stop-color="${o.bgA}"/>
+      <stop offset="50%" stop-color="${o.bgB}"/>
+      <stop offset="100%" stop-color="${o.bgC}"/>
+    </linearGradient>
+  </defs>
+
+  ${exportMode==="bg" || exportMode==="both" ? `<rect width="${w}" height="${h}" fill="url(#bg)"/>` : ``}
+
+  ${exportMode==="card" || exportMode==="both" ? `
+  <rect x="${(w-980)/2}" y="${(h-320)/2}" width="980" height="320" rx="${o.radius}"
+    fill="${rgba(o.tint,o.opacity)}" stroke="${rgba("#FFFFFF",o.borderOp)}" stroke-width="2"/>
+  <text x="${(w-980)/2 + 48}" y="${(h-320)/2 + 90}" font-family="Arial" font-size="52" font-weight="900" fill="${o.text}">${escapeXml(o.title)}</text>
+  <text x="${(w-980)/2 + 48}" y="${(h-320)/2 + 150}" font-family="Arial" font-size="26" font-weight="700" fill="${rgba(o.text,o.subAlpha)}">${escapeXml(o.sub)}</text>
+  ` : ``}
+
+  <text x="${w-20}" y="${h-20}" text-anchor="end" font-family="Arial" font-size="18" font-weight="900" fill="rgba(0,0,0,.45)">© Rahul Negi 2026</text>
+</svg>`;
+    downloadFile("glass-export.svg", svg, "image/svg+xml");
+    showToast("SVG Exported ✅");
+  }
+
+  function escapeXml(s){
+    return (s||"").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  async function copyCSS(){
+    try{ await navigator.clipboard.writeText($("cssOut").value); showToast("CSS Copied ✅"); }
+    catch{ showToast("Copy failed"); }
+  }
+
+  function exportHTML(){
+    const css = $("cssOut").value;
+    const bg = $("previewBg").style.background || `linear-gradient(135deg, ${$("bgAHex").value}, ${$("bgBHex").value}, ${$("bgCHex").value})`;
+    const showCard = (exportMode!=="bg");
+    const onlyCard = (exportMode==="card");
+
+    const html = `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Export</title>
+<style>
+  body{font-family:Arial;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:${onlyCard ? "#ffffff" : bg};}
+  .glass{width:min(520px,95%);padding:22px;${css.split(".glass{")[1].split("}")[0]}}
+  h2{margin:0 0 8px 0}
+  p{margin:0;color:rgba(0,0,0,.65);font-weight:700;line-height:1.45}
+  .pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .pill{padding:10px 12px;border-radius:999px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.35);font-weight:900}
+</style></head>
+<body>
+${showCard ? `
+  <div class="glass">
+    <h2>${escapeXml($("titleIn").value)}</h2>
+    <p>${escapeXml($("subIn").value)}</p>
+    <div class="pills">${($("pillsIn").value||"").split(",").map(s=>s.trim()).filter(Boolean).slice(0,10).map(t=>`<div class="pill">${escapeXml(t)}</div>`).join("")}</div>
+    <div style="margin-top:12px;font-weight:900;color:#666">© Rahul Negi 2026</div>
+  </div>
+` : `<div style="font-weight:900;color:#fff;opacity:.8">Background Only</div>`}
+</body></html>`;
+    downloadFile("glass-export.html", html, "text/html");
+    showToast("HTML Exported ✅");
+  }
+
+  // Buttons
+  $("copyBtn").addEventListener("click", copyCSS);
+  $("pngBtn").addEventListener("click", exportPNG);
+  $("jpgBtn").addEventListener("click", exportJPG);
+  $("svgBtn").addEventListener("click", exportSVG);
+  $("exportBtn").addEventListener("click", exportHTML);
+
+  // init
+  setMode("bg");
+</script>
+</body>
+</html>

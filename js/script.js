@@ -36,3 +36,16 @@ chips.forEach(chip => {
 });
 
 applyFilters();
+// SAVE scroll position before leaving page
+window.addEventListener("beforeunload", () => {
+  localStorage.setItem("scrollPos", window.scrollY);
+});
+
+// RESTORE scroll position when coming back
+window.addEventListener("load", () => {
+  const scrollPos = localStorage.getItem("scrollPos");
+  if (scrollPos) {
+    window.scrollTo(0, parseInt(scrollPos));
+  }
+});
+

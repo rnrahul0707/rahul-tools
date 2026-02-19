@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Color Palette Generator</title>
+  <style>
+    body{font-family:Arial;background:#f4f4f4;margin:0;padding:24px;color:#111}
+    .wrap{max-width:980px;margin:auto}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin-bottom:14px
+    }
+    .leftTop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .homeBtn{
+      display:inline-block;padding:10px 14px;border-radius:999px;background:#000;color:#fff;
+      text-decoration:none;font-weight:700
+    }
+    .homeBtn:hover{background:#333}
+    h2{margin:0}
+    .credit{font-size:13px;color:#555;font-weight:700}
+    .card{background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:18px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .left{flex:1;min-width:280px}
+    .right{flex:1;min-width:280px}
+    input[type="file"]{padding:10px;border:1px dashed #bbb;border-radius:12px;width:100%}
+    button{padding:10px 14px;border:0;border-radius:10px;background:#000;color:#fff;cursor:pointer}
+    button:hover{background:#333}
+    img{max-width:100%;border-radius:12px;display:none;margin-top:12px}
+    .palette{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+    .swatch{border-radius:14px;overflow:hidden;border:1px solid rgba(0,0,0,.08);cursor:pointer;transition:transform .06s}
+    .swatch:active{transform:scale(.98)}
+    .colorBox{height:78px}
+    .meta{padding:10px 12px;background:#fff}
+    .hex{font-weight:800}
+    .sub{font-size:12px;color:#555;margin-top:4px}
+    .status{margin-top:12px;font-size:13px;color:#333;white-space:pre-wrap}
+    .pill{font-size:12px;background:#111;color:#fff;padding:6px 10px;border-radius:999px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+    .controls label{font-size:13px;color:#333;display:flex;gap:8px;align-items:center}
+    input[type="range"]{width:160px}
+    .downloadWrap{display:flex;gap:10px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <div class="leftTop">
+        <!-- ✅ Back to Home -->
+       <a href="../index.html">← Back to Home</a>
+
+        <h2>Color Palette Generator (From Image)</h2>
+      </div>
+      <div>
+        <span class="pill">Click any color to copy HEX</span>
+        <!-- ✅ Credit -->
+        <div class="credit" style="margin-top:8px;">© Rahul Negi 2026</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="card left">
+        <input type="file" id="imgInput" accept="image/*" />
+
+        <div class="controls">
+          <label>Colors:
+            <input type="range" id="count" min="4" max="20" value="12" />
+            <span id="countVal">12</span>
+          </label>
+
+          <label>Quality:
+            <input type="range" id="quality" min="2" max="12" value="6" />
+            <span id="qualityVal">6</span>
+          </label>
+
+          <button id="genBtn">Generate</button>
+
+          <div class="downloadWrap">
+            <button id="downloadTxtBtn" disabled>Download TXT</button>
+            <button id="downloadHtmlBtn" disabled>Download HTML (with colors)</button>
+          </div>
+        </div>
+
+        <img id="preview" alt="Preview" />
+        <div class="status" id="status"></div>
+
+        <canvas id="cv" style="display:none;"></canvas>
+      </div>
+
+      <div class="card right">
+        <div id="palette" class="palette"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const imgInput = document.getElementById("imgInput");
+  const preview = document.getElementById("preview");
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+
+  const paletteEl = document.getElementById("palette");
+  const statusEl = document.getElementById("status");
+  const genBtn = document.getElementById("genBtn");
+
+  const downloadTxtBtn = document.getElementById("downloadTxtBtn");
+  const downloadHtmlBtn = document.getElementById("downloadHtmlBtn");
+
+  const countEl = document.getElementById("count");
+  const countVal = document.getElementById("countVal");
+  const qualityEl = document.getElementById("quality");
+  const qualityVal = document.getElementById("qualityVal");
+
+  countEl.oninput = () => countVal.textContent = countEl.value;
+  qualityEl.oninput = () => qualityVal.textContent = qualityEl.value;
+
+  let lastHexList = [];
+
+  function log(msg){ statusEl.textContent = msg; }
+
+  function rgbToHex(r,g,b){
+    const h = (n)=>n.toString(16).padStart(2,"0");
+    return `#${h(r)}${h(g)}${h(b)}`.toUpperCase();
+  }
+  function hexToRgb(hex){
+    const m = hex.replace("#","").match(/.{2}/g).map(x=>parseInt(x,16));
+    return { r:m[0], g:m[1], b:m[2] };
+  }
+
+  function quantizeColors(imageData, bucketSize){
+    const data = imageData.data;
+    const map = new Map();
+
+    const step = Math.max(1, Math.floor(14 / bucketSize));
+    for (let i = 0; i < data.length; i += 4 * step) {
+      const a = data[i+3];
+      if (a < 125) continue;
+
+      let r = data[i], g = data[i+1], b = data[i+2];
+
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      if (max < 12) continue;
+      if (min > 245) continue;
+
+      const q = Math.max(8, Math.floor(256 / (bucketSize * 3)));
+      r = Math.round(r / q) * q;
+      g = Math.round(g / q) * q;
+      b = Math.round(b / q) * q;
+
+      const hex = rgbToHex(r,g,b);
+      map.set(hex, (map.get(hex) || 0) + 1);
+    }
+    return map;
+  }
+
+  function pickTopColors(freqMap, n){
+    const sorted = [...freqMap.entries()]
+      .sort((a,b)=>b[1]-a[1])
+      .map(x=>x[0]);
+
+    const out = [];
+    const minDist = 48;
+
+    function dist(c1, c2){
+      const a = hexToRgb(c1), b = hexToRgb(c2);
+      const dr=a.r-b.r, dg=a.g-b.g, db=a.b-b.b;
+      return Math.sqrt(dr*dr + dg*dg + db*db);
+    }
+
+    for (const hex of sorted) {
+      if (out.length >= n) break;
+      if (out.every(h => dist(h, hex) > minDist)) out.push(hex);
+    }
+    for (const hex of sorted) {
+      if (out.length >= n) break;
+      if (!out.includes(hex)) out.push(hex);
+    }
+    return out.slice(0, n);
+  }
+
+  function renderPalette(hexList){
+    paletteEl.innerHTML = "";
+    lastHexList = hexList;
+
+    hexList.forEach((hex) => {
+      const sw = document.createElement("div");
+      sw.className = "swatch";
+      sw.innerHTML = `
+        <div class="colorBox" style="background:${hex}"></div>
+        <div class="meta">
+          <div class="hex">${hex}</div>
+          <div class="sub">Click to copy</div>
+        </div>
+      `;
+      sw.onclick = async () => {
+        try{
+          await navigator.clipboard.writeText(hex);
+          log(`Copied: ${hex}`);
+        }catch{
+          const ta = document.createElement("textarea");
+          ta.value = hex;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+          log(`Copied: ${hex}`);
+        }
+      };
+      paletteEl.appendChild(sw);
+    });
+
+    const enabled = hexList.length > 0;
+    downloadTxtBtn.disabled = !enabled;
+    downloadHtmlBtn.disabled = !enabled;
+  }
+
+  function downloadFile(filename, content, type){
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadTxt(){
+    if (!lastHexList.length) return;
+    const content = "Color Palette (HEX)\n" + lastHexList.join("\n") + "\n";
+    downloadFile("palette.txt", content, "text/plain");
+  }
+
+  function downloadHtml(){
+    if (!lastHexList.length) return;
+
+    const swatches = lastHexList.map(hex => `
+      <div class="sw">
+        <div class="box" style="background:${hex}"></div>
+        <div class="code">${hex}</div>
+      </div>
+    `).join("");
+
+    const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Palette</title>
+<style>
+  body{font-family:Arial;margin:0;padding:24px;background:#f4f4f4;color:#111}
+  .wrap{max-width:900px;margin:auto}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  h2{margin:0}
+  .credit{font-weight:800;color:#555}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .sw{background:#fff;border:1px solid #e6e6e6;border-radius:14px;overflow:hidden}
+  .box{height:90px}
+  .code{padding:10px 12px;font-weight:800}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h2>Color Palette</h2>
+      <div class="credit">© Rahul Negi 2026</div>
+    </div>
+    <div class="grid">
+      ${swatches}
+    </div>
+  </div>
+</body>
+</html>`;
+
+    downloadFile("palette.html", html, "text/html");
+  }
+
+  downloadTxtBtn.addEventListener("click", downloadTxt);
+  downloadHtmlBtn.addEventListener("click", downloadHtml);
+
+  imgInput.addEventListener("change", () => {
+    const file = imgInput.files?.[0];
+    if (!file) return;
+
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+    log("Image loaded. Click Generate.");
+    paletteEl.innerHTML = "";
+    downloadTxtBtn.disabled = true;
+    downloadHtmlBtn.disabled = true;
+  });
+
+  genBtn.addEventListener("click", () => {
+    const file = imgInput.files?.[0];
+    if (!file) return alert("Please select an image");
+
+    log("Generating palette...");
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const maxW = 520;
+      const scale = Math.min(1, maxW / img.width);
+      const w = Math.max(1, Math.floor(img.width * scale));
+      const h = Math.max(1, Math.floor(img.height * scale));
+
+      cv.width = w; cv.height = h;
+      ctx.clearRect(0,0,w,h);
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+
+      const want = Number(countEl.value);
+      const quality = Number(qualityEl.value);
+
+      const freqMap = quantizeColors(imageData, quality);
+      const top = pickTopColors(freqMap, want);
+
+      renderPalette(top);
+      log(`Done ✅  Colors: ${top.length}\nDownload TXT or HTML (with colors).`);
+    };
+
+    img.onerror = () => {
+      log("Error: Could not load image.");
+      alert("Image load failed");
+    };
+  });
+</script>
+</body>
+</html>
