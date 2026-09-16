@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<a href="../index.html" class="back-home">← Back to Home</a>
+<title>Rahul Tools — Box Mockup</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#0d1117;--panel:#151b23;--line:#29313c;--text:#f5f7f9;--muted:#8f9ba7;--accent:#14a3a3}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Arial,Inter,sans-serif}
+.header{height:64px;background:#0a0e13;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 22px}
+.header-in{width:100%;max-width:1500px;margin:auto;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:20px;font-weight:800}.logo span{color:var(--accent)}
+.head{font-size:10px;color:var(--muted)}
+.app{max-width:1500px;margin:auto;padding:14px;display:grid;grid-template-columns:330px minmax(0,1fr) 330px;gap:14px;min-height:calc(100vh - 64px)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px;overflow:auto}
+h1{font-size:20px;margin:0 0 5px}h2{font-size:13px;margin:0 0 11px}.desc{font-size:10px;color:var(--muted);line-height:1.5;margin:0 0 14px}
+.upload-list{display:grid;gap:8px}
+.face-upload{border:1px solid #303a45;background:#10161d;border-radius:9px;padding:9px;display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:9px}
+.face-upload .thumb{width:52px;height:52px;border-radius:6px;background:#080c10;border:1px solid #27313b;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:9px;color:var(--muted);text-align:center}
+.thumb img{width:100%;height:100%;object-fit:cover}.face-upload b{font-size:10px;display:block}.face-upload small{font-size:8px;color:var(--muted)}
+.face-upload label{background:#29343f;padding:7px 8px;border-radius:6px;font-size:8px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.face-upload input{display:none}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+button{border:0;border-radius:8px;padding:10px;background:var(--accent);color:white;font-size:10px;font-weight:bold;cursor:pointer}
+button.secondary{background:#29313c}button:disabled{opacity:.4}
+.status{font-size:9px;color:#b9c3ca;background:#10161d;border:1px solid var(--line);padding:9px;border-radius:8px;margin-top:9px;line-height:1.4}
+.divider{height:1px;background:var(--line);margin:14px 0}
+.unit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.control{margin-bottom:10px}.control label{display:flex;justify-content:space-between;font-size:9px;color:#cbd3da;margin-bottom:5px}.control label span{color:#7e8a95}
+input[type=number],select{width:100%;background:#0e141a;color:#eee;border:1px solid #303945;border-radius:7px;padding:8px;font-size:10px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=color]{width:100%;height:31px;border:1px solid #303945;border-radius:7px;background:#0e141a;padding:2px}
+.check{display:flex!important;justify-content:flex-start!important;align-items:center;gap:7px}.check input{accent-color:var(--accent)}
+.stage-panel{min-width:0;display:flex;flex-direction:column}.stage-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.stage-head b{font-size:13px}.stage-head span{font-size:9px;color:var(--muted)}
+.stage{height:calc(100vh - 110px);min-height:590px;border:1px solid var(--line);border-radius:15px;overflow:hidden;position:relative;background:#080b0f}
+#canvas{width:100%;height:100%;display:block;cursor:grab}.stage.drag #canvas{cursor:grabbing}
+.help{position:absolute;left:12px;bottom:10px;background:rgba(0,0,0,.58);padding:7px 9px;border-radius:7px;color:#aeb7be;font-size:9px;pointer-events:none}
+.badge{display:inline-block;background:#1c2b2f;color:#8bd5d5;border-radius:99px;padding:4px 7px;font-size:8px;margin-bottom:10px}
+.note{font-size:9px;line-height:1.5;color:#7f8b96;background:#10161d;padding:9px;border-radius:8px}
+@media(max-width:1200px){.app{grid-template-columns:300px minmax(0,1fr)}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.right h2,.right .badge{grid-column:1/-1}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.stage{height:65vh;min-height:430px}.right{display:block}.head{display:none}}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-in"><div class="logo">RAHUL <span>TOOLS</span></div><div class="head">BOX MOCKUP • MULTI-FACE ARTWORK</div></div></header>
+
+<div class="app">
+<section class="panel">
+<h1>Box Mockup</h1>
+<p class="desc">Har box face ki artwork alag upload karo. Front, Back, Left, Right, Top aur Bottom ko independently map karke live mockup banao.</p>
+
+<h2>Upload Box Artwork</h2>
+<div class="upload-list">
+  <div class="face-upload"><div class="thumb" id="thumb-front">FRONT</div><div><b>Front</b><small>Main front packaging design</small></div><label>Upload<input data-face="front" type="file" accept="image/*"></label></div>
+  <div class="face-upload"><div class="thumb" id="thumb-back">BACK</div><div><b>Back</b><small>Back panel / ingredients</small></div><label>Upload<input data-face="back" type="file" accept="image/*"></label></div>
+  <div class="face-upload"><div class="thumb" id="thumb-left">LEFT</div><div><b>Left Side</b><small>Left side panel</small></div><label>Upload<input data-face="left" type="file" accept="image/*"></label></div>
+  <div class="face-upload"><div class="thumb" id="thumb-right">RIGHT</div><div><b>Right Side</b><small>Right side panel</small></div><label>Upload<input data-face="right" type="file" accept="image/*"></label></div>
+  <div class="face-upload"><div class="thumb" id="thumb-top">TOP</div><div><b>Top</b><small>Top flap / top artwork</small></div><label>Upload<input data-face="top" type="file" accept="image/*"></label></div>
+  <div class="face-upload"><div class="thumb" id="thumb-bottom">BOTTOM</div><div><b>Bottom</b><small>Bottom panel</small></div><label>Upload<input data-face="bottom" type="file" accept="image/*"></label></div>
+</div>
+
+<div class="buttons"><button id="clear">Clear All</button><button id="demo" class="secondary">Demo Box</button></div>
+<div class="status" id="status">Upload at least one face. Front artwork is enough for a basic mockup.</div>
+
+<div class="divider"></div>
+<h2>Exact Box Size</h2>
+<div class="unit-grid">
+<div class="control"><label>Width <span>cm</span></label><input id="w" type="number" value="8.6" min="1" step=".1"></div>
+<div class="control"><label>Height <span>cm</span></label><input id="h" type="number" value="12.7" min="1" step=".1"></div>
+<div class="control"><label>Depth <span>cm</span></label><input id="d" type="number" value="3.8" min=".1" step=".1"></div>
+</div>
+<div class="note">Ye actual print dimensions ke proportion ko follow karega. Example: 8.6 × 12.7 × 3.8 cm.</div>
+</section>
+
+<section class="stage-panel">
+<div class="stage-head"><div><b>Box Mockup Preview</b><br><span>Drag to rotate • Wheel to zoom • Right drag to move</span></div><button id="export" disabled>Export PNG</button></div>
+<div class="stage" id="stage"><canvas id="canvas"></canvas><div class="help">Left drag = rotate • Wheel = zoom • Right drag = pan</div></div>
+</section>
+
+<section class="panel right">
+<h2>Mockup Controls</h2><div class="badge">LIVE PREVIEW</div>
+
+<div class="control"><label>Box Scale <span id="scaleV">1.00×</span></label><input id="scale" type="range" min=".55" max="1.5" step=".01" value="1"></div>
+<div class="control"><label>Rotation / Angle <span id="angleV">-18°</span></label><input id="angle" type="range" min="-180" max="180" value="-18"></div>
+<div class="control"><label>Vertical Tilt <span id="tiltV">10°</span></label><input id="tilt" type="range" min="-80" max="80" value="10"></div>
+<div class="control"><label>Zoom <span id="zoomV">1.00×</span></label><input id="zoom" type="range" min=".6" max="1.8" step=".01" value="1"></div>
+
+<div class="divider"></div>
+<h2>Box Appearance</h2>
+<div class="control"><label>Box Base Color</label><input id="boxColor" type="color" value="#E8E8E8"></div>
+<div class="control"><label>Background</label><input id="bg" type="color" value="#F3F3F1"></div>
+<div class="control"><label>Side Darkening <span id="darkV">25%</span></label><input id="dark" type="range" min="0" max="60" value="25"></div>
+<div class="control"><label>Shadow <span id="shadowV">55%</span></label><input id="shadow" type="range" min="0" max="100" value="55"></div>
+
+<div class="divider"></div>
+<h2>Selected Face</h2>
+<select id="selectedFace">
+<option value="front">Front</option><option value="back">Back</option><option value="left">Left Side</option><option value="right">Right Side</option><option value="top">Top</option><option value="bottom">Bottom</option>
+</select>
+<button id="viewFace" class="secondary" style="width:100%;margin-top:8px">View This Face</button>
+<div class="control" style="margin-top:10px"><label>Face Opacity <span id="faceOpacityV">100%</span></label><input id="faceOpacity" type="range" min="0" max="100" value="100"></div>
+
+<div class="control" style="margin-bottom:6px">
+  <label>Face Width (Scale X) <span id="faceScaleXV">100%</span></label>
+  <div style="display:flex;align-items:center;gap:7px">
+    <input id="faceScaleX" type="range" min="20" max="200" value="100" style="flex:1">
+  </div>
+</div>
+<div style="display:flex;justify-content:center;margin:-2px 0 4px">
+  <button id="linkScale" title="Link/Unlink width &amp; height" style="width:auto;padding:5px 10px;background:#29343f;font-size:11px">🔗 Linked</button>
+</div>
+<div class="control" style="margin-bottom:10px">
+  <label>Face Height (Scale Y) <span id="faceScaleYV">100%</span></label>
+  <div style="display:flex;align-items:center;gap:7px">
+    <input id="faceScaleY" type="range" min="20" max="200" value="100" style="flex:1">
+  </div>
+</div>
+<div class="control"><label>Face X Offset <span id="faceXV">0%</span></label><input id="faceX" type="range" min="-50" max="50" value="0"></div>
+<div class="control"><label>Face Y Offset <span id="faceYV">0%</span></label><input id="faceY" type="range" min="-50" max="50" value="0"></div>
+<button id="stretchFit" class="secondary" style="width:100%;margin-top:2px">Stretch to Fill Face</button>
+
+<div class="divider"></div>
+<label class="check"><input id="showEdges" type="checkbox" checked> Show box edges</label>
+<label class="check"><input id="showShadow" type="checkbox" checked> Ground shadow</label>
+<div class="buttons"><button id="frontView">Front View</button><button id="reset" class="secondary">Reset</button></div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const canvas=$("canvas"),ctx=canvas.getContext("2d");
+const faces={front:null,back:null,left:null,right:null,top:null,bottom:null};
+const faceSettings={
+ front:{opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true},back:{opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true},
+ left:{opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true},right:{opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true},
+ top:{opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true},bottom:{opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true}
+};
+const s={w:8.6,h:12.7,d:3.8,scale:1,angle:-18,tilt:10,zoom:1,boxColor:"#E8E8E8",bg:"#F3F3F1",dark:25,shadow:55,showEdges:true,showShadow:true,panX:0,panY:0};
+let yaw=s.angle,tilt=s.tilt,drag=false,pan=false,lastX=0,lastY=0;
+
+function status(t){$("status").textContent=t}
+function resize(){const r=$("stage").getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=r.width*d;canvas.height=r.height*d;canvas.style.width=r.width+"px";canvas.style.height=r.height+"px";render()}
+addEventListener("resize",resize);
+
+// Rotate camera so a given face becomes clearly visible.
+const FACE_PRESETS={
+ front:{yaw:-18,tilt:10}, back:{yaw:165,tilt:10},
+ right:{yaw:-70,tilt:10}, left:{yaw:70,tilt:10},
+ top:{yaw:-18,tilt:65}, bottom:{yaw:-18,tilt:-65}
+};
+function snapToFace(face){
+ const p=FACE_PRESETS[face];
+ yaw=p.yaw;tilt=p.tilt;
+ $("angle").value=yaw;$("angleV").textContent=yaw+"°";
+ $("tilt").value=tilt;$("tiltV").textContent=tilt+"°";
+}
+
+function uploadFace(face,file){
+ if(!file||!file.type.startsWith("image/")){status("That file isn't an image ("+(file?file.type||"unknown type":"none")+"). Please choose a JPG/PNG/WEBP.");return}
+ status("Loading "+face+" image…");
+ const reader=new FileReader();
+ reader.onload=()=>{
+   const img=new Image();
+   img.onload=()=>{
+     faces[face]=img;
+     const t=$("thumb-"+face);t.innerHTML="";const im=document.createElement("img");im.src=reader.result;t.appendChild(im);
+     $("selectedFace").value=face;syncFaceUI();
+     snapToFace(face); // always jump the camera to the face you just uploaded
+     $("export").disabled=false;
+     status(face.toUpperCase()+" artwork uploaded ✓ — camera moved to show this face.");
+     render();
+   };
+   img.onerror=()=>{status("Could not decode the "+face+" image. Try re-saving it as a standard RGB PNG or JPG (CMYK JPGs from design software often fail to load in browsers).")};
+   img.src=reader.result;
+ };
+ reader.onerror=()=>{status("Could not read the "+face+" file from disk.")};
+ reader.readAsDataURL(file);
+}
+document.querySelectorAll('input[type=file][data-face]').forEach(input=>{
+ input.addEventListener("change",e=>{const f=e.target.files[0];if(f)uploadFace(input.dataset.face,f);input.value=""})
+});
+$("clear").onclick=()=>{
+ for(const k in faces)faces[k]=null;
+ for(const k of Object.keys(faces))$("thumb-"+k).textContent=k.toUpperCase();
+ status("All artwork cleared.");render();$("export").disabled=true;
+};
+
+$("demo").onclick=()=>{
+ // Generated demo artwork to prove every face mapping works.
+ for(const k of Object.keys(faces)){
+   const c=document.createElement("canvas");c.width=800;c.height=1100;const x=c.getContext("2d");
+   x.fillStyle=k==="front"?"#14a3a3":k==="back"?"#20252b":k==="left"?"#0e7f82":k==="right"?"#7d2020":k==="top"?"#e8e8e8":"#c9c9c9";x.fillRect(0,0,c.width,c.height);
+   x.fillStyle=k==="top"||k==="bottom"?"#111":"#fff";x.font="bold 72px Arial";x.textAlign="center";x.fillText("TEMPT",400,430);x.font="bold 45px Arial";x.fillText(k.toUpperCase(),400,510);x.font="26px Arial";x.fillText("RAHUL TOOLS MOCKUP",400,575);
+   const img=new Image();img.onload=()=>{faces[k]=img;const t=$("thumb-"+k);t.innerHTML="";const im=document.createElement("img");im.src=c.toDataURL();t.appendChild(im);render()};img.src=c.toDataURL();
+ }
+ $("export").disabled=false;status("Demo artwork applied to all six faces ✓ — rotate the box or use \"View This Face\" to check each one.");
+};
+
+["w","h","d"].forEach(id=>$(id).addEventListener("input",()=>{s[id]=Math.max(.1,Number($(id).value)||.1);render()}));
+function bind(id,key,out,fmt){$(id).addEventListener("input",()=>{s[key]=Number($(id).value);$(out).textContent=fmt(s[key]);if(key==="angle")yaw=s.angle;if(key==="tilt")tilt=s.tilt;render()})}
+bind("scale","scale","scaleV",v=>v.toFixed(2)+"×");bind("angle","angle","angleV",v=>v+"°");bind("tilt","tilt","tiltV",v=>v+"°");bind("zoom","zoom","zoomV",v=>v.toFixed(2)+"×");bind("dark","dark","darkV",v=>v+"%");bind("shadow","shadow","shadowV",v=>v+"%");
+$("boxColor").addEventListener("input",()=>{s.boxColor=$("boxColor").value;render()});
+$("bg").addEventListener("input",()=>{s.bg=$("bg").value;render()});
+$("showEdges").addEventListener("change",()=>{s.showEdges=$("showEdges").checked;render()});
+$("showShadow").addEventListener("change",()=>{s.showShadow=$("showShadow").checked;render()});
+
+function selected(){return $("selectedFace").value}
+function syncFaceUI(){
+ const f=faceSettings[selected()];
+ $("faceOpacity").value=f.opacity;$("faceScaleX").value=f.scaleX;$("faceScaleY").value=f.scaleY;$("faceX").value=f.x;$("faceY").value=f.y;
+ $("faceOpacityV").textContent=f.opacity+"%";$("faceScaleXV").textContent=f.scaleX+"%";$("faceScaleYV").textContent=f.scaleY+"%";$("faceXV").textContent=f.x+"%";$("faceYV").textContent=f.y+"%";
+ $("linkScale").textContent=f.linked?"🔗 Linked":"🔓 Unlinked";
+ $("linkScale").style.background=f.linked?"var(--accent)":"#29343f";
+}
+$("selectedFace").addEventListener("change",syncFaceUI);
+function faceBind(id,key,out,fmt){$(id).addEventListener("input",()=>{faceSettings[selected()][key]=Number($(id).value);$(out).textContent=fmt(faceSettings[selected()][key]);render()})}
+faceBind("faceOpacity","opacity","faceOpacityV",v=>v+"%");faceBind("faceX","x","faceXV",v=>v+"%");faceBind("faceY","y","faceYV",v=>v+"%");
+
+// Width/Height sliders: when linked, dragging one drags the other by the same value (proportional stretch);
+// when unlinked, each axis moves independently so the image can be non-uniformly stretched to fit a face.
+$("faceScaleX").addEventListener("input",()=>{
+  const f=faceSettings[selected()];const v=Number($("faceScaleX").value);
+  f.scaleX=v;$("faceScaleXV").textContent=v+"%";
+  if(f.linked){f.scaleY=v;$("faceScaleY").value=v;$("faceScaleYV").textContent=v+"%";}
+  render();
+});
+$("faceScaleY").addEventListener("input",()=>{
+  const f=faceSettings[selected()];const v=Number($("faceScaleY").value);
+  f.scaleY=v;$("faceScaleYV").textContent=v+"%";
+  if(f.linked){f.scaleX=v;$("faceScaleX").value=v;$("faceScaleXV").textContent=v+"%";}
+  render();
+});
+$("linkScale").onclick=()=>{
+  const f=faceSettings[selected()];
+  f.linked=!f.linked;
+  if(f.linked){
+    // Re-syncing on link: bring both axes to scaleX's current value so nothing jumps unexpectedly.
+    f.scaleY=f.scaleX;$("faceScaleY").value=f.scaleX;$("faceScaleYV").textContent=f.scaleX+"%";
+  }
+  $("linkScale").textContent=f.linked?"🔗 Linked":"🔓 Unlinked";
+  $("linkScale").style.background=f.linked?"var(--accent)":"#29343f";
+  render();
+};
+$("stretchFit").onclick=()=>{
+  // Force the artwork to fill the entire face edge-to-edge, ignoring the image's own aspect ratio.
+  const f=faceSettings[selected()];
+  f.scaleX=100;f.scaleY=100;f.x=0;f.y=0;
+  $("faceScaleX").value=100;$("faceScaleY").value=100;$("faceX").value=0;$("faceY").value=0;
+  $("faceScaleXV").textContent="100%";$("faceScaleYV").textContent="100%";$("faceXV").textContent="0%";$("faceYV").textContent="0%";
+  status((selected().toUpperCase())+" artwork stretched to fill the face.");
+  render();
+};
+
+$("viewFace").onclick=()=>{
+ snapToFace(selected());
+ render();
+};
+
+function hex(hexColor,f){
+  hexColor=hexColor.replace("#","");
+  let a=[
+    parseInt(hexColor.slice(0,2),16),
+    parseInt(hexColor.slice(2,4),16),
+    parseInt(hexColor.slice(4,6),16)
+  ].map(v=>Math.max(0,Math.min(255,Math.round(v*f))));
+  return "rgb("+a.join(",")+")";
+}
+
+function quad(q,fill){
+  ctx.beginPath();
+  ctx.moveTo(q[0][0],q[0][1]);
+  for(let i=1;i<q.length;i++)ctx.lineTo(q[i][0],q[i][1]);
+  ctx.closePath();
+  ctx.fillStyle=fill;
+  ctx.fill();
+  if(s.showEdges){
+    ctx.strokeStyle="rgba(0,0,0,.28)";
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+}
+
+/* Draw artwork onto a face using an exact affine (parallelogram) mapping.
+   Because the box is projected with a parallel (orthographic) rotation,
+   every face's 3D rectangle projects to a perfect parallelogram in 2D —
+   so three corners (top-left, top-right, bottom-left) are enough to map
+   the image onto it with zero distortion, and clipping keeps it from
+   spilling onto neighbouring faces. */
+function drawImageFace(img,tl,tr,bl,f){
+  if(!img)return;
+  ctx.save();
+  ctx.transform(tr[0]-tl[0],tr[1]-tl[1],bl[0]-tl[0],bl[1]-tl[1],tl[0],tl[1]);
+  ctx.beginPath();ctx.rect(0,0,1,1);ctx.clip();
+  ctx.globalAlpha=f.opacity/100;
+  const scX=f.scaleX/100,scY=f.scaleY/100,ox=f.x/100,oy=-f.y/100;
+  ctx.drawImage(img,(1-scX)/2+ox,(1-scY)/2+oy,scX,scY);
+  ctx.restore();
+}
+
+// A true cuboid: 8 corners around the origin, exact w/h/d ratio.
+// c0..c3 = back face, c4..c7 = front face (bl,br,tr,tl order in each).
+function buildCorners(hw,hh,hd){
+  return [
+    [-hw,-hh,-hd],[hw,-hh,-hd],[hw,hh,-hd],[-hw,hh,-hd],
+    [-hw,-hh, hd],[hw,-hh, hd],[hw,hh, hd],[-hw,hh, hd]
+  ];
+}
+
+// Each face: [topLeft, topRight, bottomLeft, bottomRight] corner indices
+// (matching natural image orientation), plus its outward normal.
+const FACES={
+  front: {c:[7,6,4,5], n:[0,0, 1]},
+  back:  {c:[2,3,1,0], n:[0,0,-1]},
+  right: {c:[6,2,5,1], n:[1,0, 0]},
+  left:  {c:[3,7,0,4], n:[-1,0,0]},
+  top:   {c:[3,2,7,6], n:[0,1, 0]},
+  bottom:{c:[4,5,0,1], n:[0,-1,0]}
+};
+
+function render(){
+ try{
+  renderBox();
+ }catch(err){
+  status("Render error: "+err.message+" (screenshot le kar bhej dena, main fix kar dungi)");
+  console.error(err);
+ }
+}
+
+function renderBox(){
+  const d=Math.min(devicePixelRatio||1,2);
+  const W=canvas.width/d,H=canvas.height/d;
+
+  ctx.setTransform(d,0,0,d,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  ctx.fillStyle=s.bg;
+  ctx.fillRect(0,0,W,H);
+
+  const glow=ctx.createRadialGradient(W*.48,H*.42,20,W*.48,H*.42,Math.max(W,H)*.75);
+  glow.addColorStop(0,"rgba(255,255,255,.55)");
+  glow.addColorStop(1,"rgba(0,0,0,.035)");
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,W,H);
+
+  // Pixels-per-cm, sized so the rotated box (incl. depth) fits the stage.
+  const base=Math.min(W*.46/(s.w+s.d*.7), H*.58/(s.h+s.d*.7))*s.scale*s.zoom;
+  const hw=s.w/2*base, hh=s.h/2*base, hd=s.d/2*base;
+  const corners=buildCorners(hw,hh,hd);
+
+  const a=yaw*Math.PI/180, t=tilt*Math.PI/180;
+  function rot(v){
+    const x1=v[0]*Math.cos(a)+v[2]*Math.sin(a);
+    const z1=-v[0]*Math.sin(a)+v[2]*Math.cos(a);
+    const y1=v[1];
+    const y2=y1*Math.cos(t)-z1*Math.sin(t);
+    const z2=y1*Math.sin(t)+z1*Math.cos(t);
+    return [x1,y2,z2];
+  }
+  const rotated=corners.map(rot);
+
+  const centerX=W/2+s.panX, centerY=H/2+s.panY;
+  const screen=rotated.map(v=>[centerX+v[0],centerY-v[1]]);
+
+  // Ground shadow, based on the actual projected silhouette.
+  if(s.showShadow){
+    const xs=screen.map(p=>p[0]),ys=screen.map(p=>p[1]);
+    const cx=(Math.min(...xs)+Math.max(...xs))/2;
+    const spread=(Math.max(...xs)-Math.min(...xs))*.42;
+    ctx.save();
+    ctx.globalAlpha=s.shadow/100;
+    ctx.filter="blur(18px)";
+    ctx.fillStyle="#000";
+    ctx.beginPath();
+    ctx.ellipse(cx,Math.max(...ys)+14,Math.max(20,spread),Math.max(10,hh*.12),0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Simple fixed light direction for shading each visible face.
+  const L=[0.374,0.607,0.701];
+  let visible=[];
+  for(const name in FACES){
+    const f=FACES[name];
+    const rn=rot(f.n);
+    if(rn[2]<=0.02)continue; // back-facing from this angle → skip
+    const [tl,tr,bl,br]=f.c.map(i=>screen[i]);
+    const avgZ=f.c.reduce((sum,i)=>sum+rotated[i][2],0)/4;
+    const brightness=Math.max(.35,rn[0]*L[0]+rn[1]*L[1]+rn[2]*L[2]);
+    const shade=1-(s.dark/100)*(1-brightness);
+    visible.push({name,tl,tr,bl,br,avgZ,shade});
+  }
+  visible.sort((p,q)=>p.avgZ-q.avgZ); // farthest first (painter's algorithm)
+
+  for(const f of visible){
+    quad([f.tl,f.tr,f.br,f.bl],hex(s.boxColor,f.shade));
+    drawImageFace(faces[f.name],f.tl,f.tr,f.bl,faceSettings[f.name]);
+  }
+
+  // Info badge: dims + which faces are visible right now + upload count.
+  const visibleNames=visible.map(f=>f.name[0].toUpperCase()+f.name.slice(1)).join(", ");
+  const uploaded=Object.keys(faces).filter(k=>faces[k]).length;
+  ctx.font="11px Arial";
+  const line1="BOX  "+s.w+" × "+s.h+" × "+s.d+" cm";
+  const line2="Visible: "+visibleNames+"   •   Artwork uploaded: "+uploaded+"/6";
+  const boxW=Math.max(320,ctx.measureText(line2).width+30);
+  ctx.fillStyle="rgba(0,0,0,.56)";
+  ctx.beginPath();ctx.roundRect(16,H-58,boxW,44,7);ctx.fill();
+  ctx.fillStyle="#dce4e8";
+  ctx.fillText(line1,28,H-40);
+  ctx.fillStyle="#8bd5d5";
+  ctx.fillText(line2,28,H-22);
+}
+
+canvas.addEventListener("pointerdown",e=>{drag=true;pan=e.button===2||e.ctrlKey;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;if(pan){s.panX+=dx;s.panY+=dy}else{yaw+=dx*.3;tilt+=dy*.2; yaw=Math.max(-180,Math.min(180,yaw));tilt=Math.max(-80,Math.min(80,tilt));$("angle").value=Math.round(yaw);$("angleV").textContent=Math.round(yaw)+"°";$("tilt").value=Math.round(tilt);$("tiltV").textContent=Math.round(tilt)+"°"}lastX=e.clientX;lastY=e.clientY;render()});
+canvas.addEventListener("pointerup",e=>{drag=false;try{canvas.releasePointerCapture(e.pointerId)}catch{}});
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+canvas.addEventListener("wheel",e=>{e.preventDefault();s.zoom=Math.max(.6,Math.min(1.8,s.zoom+(e.deltaY<0?.05:-.05)));$("zoom").value=s.zoom;$("zoomV").textContent=s.zoom.toFixed(2)+"×";render()},{passive:false});
+
+$("frontView").onclick=()=>{
+  yaw=-18; tilt=10; s.panX=0; s.panY=0;
+  $("angle").value=-18; $("angleV").textContent="-18°";
+  $("tilt").value=10; $("tiltV").textContent="10°";
+  render();
+};
+$("reset").onclick=()=>{Object.assign(s,{w:8.6,h:12.7,d:3.8,scale:1,angle:-18,tilt:10,zoom:1,boxColor:"#E8E8E8",bg:"#F3F3F1",dark:25,shadow:55,showEdges:true,showShadow:true,panX:0,panY:0});yaw=-18;tilt=10;["w","h","d","scale","angle","tilt","zoom","dark","shadow"].forEach(id=>$(id).value=s[id]);$("boxColor").value=s.boxColor;$("bg").value=s.bg;$("showEdges").checked=true;$("showShadow").checked=true;$("scaleV").textContent="1.00×";$("angleV").textContent="-18°";$("tiltV").textContent="10°";$("zoomV").textContent="1.00×";$("darkV").textContent="25%";$("shadowV").textContent="55%";for(const k of Object.keys(faceSettings))faceSettings[k]={opacity:100,scaleX:100,scaleY:100,x:0,y:0,linked:true};syncFaceUI();render()};
+
+$("export").onclick=()=>{
+ const oldW=canvas.width,oldH=canvas.height,sw=canvas.style.width,sh=canvas.style.height;
+ canvas.width=2400;canvas.height=1600;canvas.style.width="2400px";canvas.style.height="1600px";render();
+ const a=document.createElement("a");a.download="rahul-tools-box-mockup.png";a.href=canvas.toDataURL("image/png");a.click();
+ canvas.width=oldW;canvas.height=oldH;canvas.style.width=sw;canvas.style.height=sh;render();
+};
+syncFaceUI();resize();
+window.addEventListener("error",e=>{status("Script error: "+e.message)});
+</script>
+</body>
+</html>
