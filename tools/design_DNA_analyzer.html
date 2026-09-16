@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Rahul Tools - Design DNA Analyzer</title>
+<a href="../index.html" class="back-home">← Back to Home</a>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+:root{
+ --bg:#0d1117;--panel:#151b23;--panel2:#10161d;--line:#29313c;
+ --text:#f5f7fa;--muted:#98a4b0;--accent:#14a3a3;--accent2:#008a8a;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+.topbar{height:68px;background:#0a0e13;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 22px;position:sticky;top:0;z-index:20}
+.top-inner{width:100%;max-width:1500px;margin:auto;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:20px;font-weight:800;letter-spacing:-.5px}.logo span{color:#14a3a3}
+.top-right{font-size:11px;color:#8995a1}
+.app{max-width:1500px;margin:auto;padding:20px;display:grid;grid-template-columns:350px minmax(0,1fr) 300px;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.panel h2{font-size:14px;margin:0 0 12px}
+.panel-title{font-size:22px;font-weight:800;margin:0 0 5px}
+.desc{font-size:11px;line-height:1.55;color:var(--muted);margin:0 0 15px}
+.upload{border:1.5px dashed #46515d;background:#10161d;border-radius:12px;padding:22px 12px;text-align:center;cursor:pointer}
+.upload.drag{border-color:#14a3a3;background:#102122}
+.upload b{display:block;font-size:12px;margin-bottom:6px}.upload span{font-size:10px;color:var(--muted)}
+#file{display:none}
+.preview{margin-top:12px;background:#090d12;border-radius:10px;min-height:150px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.preview img{max-width:100%;max-height:230px;display:block}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+button{border:0;border-radius:9px;padding:10px 12px;background:#14a3a3;color:#fff;font-size:11px;font-weight:700;cursor:pointer}
+button.secondary{background:#29313c}button:disabled{opacity:.4;cursor:not-allowed}
+.status{font-size:10px;color:#aeb8c2;background:#10161d;border:1px solid var(--line);border-radius:8px;padding:9px;margin-top:9px;line-height:1.4}
+.tabs{display:flex;gap:5px;margin-bottom:10px}.tab{flex:1;background:#202731;color:#aab5c0;padding:8px 5px;font-size:10px;border-radius:7px;text-align:center;cursor:pointer}.tab.active{background:#14a3a3;color:#fff}
+.tab-page{display:none}.tab-page.active{display:block}
+.control{margin-bottom:12px}.control label{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#c7d0d8;margin-bottom:6px}.control label span{color:#7e8994}
+input[type=text],textarea,select{width:100%;background:#0e141a;color:#e8edf1;border:1px solid #303945;border-radius:8px;padding:9px;font:inherit;font-size:11px;outline:none}
+textarea{min-height:58px;resize:vertical}
+input[type=range]{width:100%;accent-color:#14a3a3}
+input[type=color]{width:100%;height:36px;padding:2px;background:#0e141a;border:1px solid #303945;border-radius:7px;cursor:pointer}
+.check{display:flex!important;justify-content:flex-start!important;align-items:center;gap:7px!important;margin:8px 0}.check input{accent-color:#14a3a3}
+.color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mini{font-size:9px;color:#77838e;margin-top:4px}
+.canvas-panel{min-width:0}
+.canvas-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.canvas-head b{font-size:13px}.canvas-head span{font-size:10px;color:var(--muted)}
+.canvas-box{background:#070a0e;border:1px solid var(--line);border-radius:15px;padding:8px;overflow:auto}
+.canvas-stage{position:relative;width:100%;aspect-ratio:16/9;min-width:600px}
+#board{width:100%;height:100%;display:block;border-radius:9px;background:#fff}
+.canvas-help{font-size:9px;color:#707c88;margin-top:7px}
+.section-note{font-size:9px;color:#77838e;line-height:1.4;background:#10161d;border-radius:8px;padding:8px;margin-top:8px}
+.hidden{display:none!important}
+@media(max-width:1150px){.app{grid-template-columns:310px minmax(0,1fr)}.right-panel{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px}.right-panel>h2{grid-column:1/-1}}
+@media(max-width:850px){.app{grid-template-columns:1fr}.right-panel{display:block}.canvas-stage{min-width:0}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="top-inner">
+    <div class="logo">RAHUL <span>TOOLS</span></div>
+    <div class="top-right">Design DNA Analyzer • Editable Style Board</div>
+  </div>
+</header>
+
+<div class="app">
+
+<!-- LEFT -->
+<section class="panel">
+  <div class="panel-title">Design DNA</div>
+  <p class="desc">Upload any design — packaging, poster, social post, banner, ad or artwork. Extract colors and text, then customize every visible board element.</p>
+
+  <div class="upload" id="upload">
+    <b>Upload / Drag & Drop</b>
+    <span>JPG • PNG • WEBP • Ctrl + V</span>
+    <input id="file" type="file" accept="image/*">
+  </div>
+
+  <div class="preview" id="preview"><span style="font-size:10px;color:#65717d">No image selected</span></div>
+
+  <div class="buttons">
+    <button id="analyze" disabled>Analyze Design</button>
+    <button class="secondary" id="clear">Clear</button>
+  </div>
+
+  <div class="status" id="status">Upload an image to start.</div>
+
+  <div class="control" style="margin-top:14px">
+    <label>OCR <span>optional</span></label>
+    <label class="check"><input id="ocr" type="checkbox" checked> Detect text from image</label>
+  </div>
+
+  <div class="section-note">
+    <b>Font accuracy:</b> flattened artwork cannot reliably reveal the exact original font. The tool shows a closest-match suggestion.
+  </div>
+</section>
+
+
+<!-- CENTER -->
+<section class="panel canvas-panel">
+  <div class="canvas-head">
+    <div><b>Live 16:9 Style Board</b><br><span>1920 × 1080 • changes update instantly</span></div>
+    <button id="download" disabled>Download PNG</button>
+  </div>
+
+  <div class="canvas-box">
+    <div class="canvas-stage">
+      <canvas id="board" width="1920" height="1080"></canvas>
+      <div id="empty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#687482;font-size:12px;pointer-events:none">Upload and analyze a design</div>
+    </div>
+  </div>
+  <div class="canvas-help">Tip: use the Image controls to change the reference image width, height and position.</div>
+</section>
+
+
+<!-- RIGHT -->
+<section class="panel right-panel">
+  <h2>Customize Board</h2>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="content">Content</div>
+    <div class="tab" data-tab="colors">Colors</div>
+    <div class="tab" data-tab="image">Image</div>
+    <div class="tab" data-tab="style">Style</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="tab-page active" id="page-content">
+    <div class="control"><label>Heading line 1</label><input id="heading1" type="text" value="TYPOGRAPHY &"></div>
+    <div class="control"><label>Heading line 2</label><input id="heading2" type="text" value="COLOR PALETTE"></div>
+    <div class="control"><label>Typography label</label><input id="typographyLabel" type="text" value="TYPOGRAPHY"></div>
+    <div class="control"><label>Primary sample text</label><input id="primarySample" type="text" value="DESIGN DNA"></div>
+    <div class="control"><label>Primary font</label><select id="font1"><option>Montserrat</option><option>Poppins</option><option>Geologica</option><option>Inter</option><option>Oswald</option><option>Manrope</option></select></div>
+    <div class="control"><label>Secondary font</label><select id="font2"><option>Geologica</option><option>Poppins</option><option>Inter</option><option>Montserrat</option><option>Oswald</option><option>Manrope</option></select></div>
+    <div class="control"><label>Font size <span id="fontSizeVal">76</span></label><input id="fontSize" type="range" min="38" max="120" value="76"></div>
+    <div class="control"><label>Style tags</label><input id="tags" type="text" value="MODERN, CLEAN, GEOMETRIC, TECH-FORWARD"></div>
+    <div class="control"><label>Design character</label><input id="character" type="text" value="Modern • Clean • Geometric • Tech-forward"></div>
+    <div class="control"><label>Detected text shown on board</label><textarea id="detectedText"></textarea></div>
+    <div class="control"><label class="check"><input id="showDetected" type="checkbox" checked> Show detected text</label></div>
+  </div>
+
+  <!-- COLORS -->
+  <div class="tab-page" id="page-colors">
+    <div class="control"><label>Board background</label><input id="bgColor" type="color" value="#F7F9F9"></div>
+    <div class="control"><label>Main heading</label><input id="headingColor" type="color" value="#202020"></div>
+    <div class="control"><label>Accent / section color</label><input id="accentColor" type="color" value="#008A8A"></div>
+    <div class="control"><label>Body / secondary text</label><input id="bodyColor" type="color" value="#58636E"></div>
+    <div class="control"><label>Image frame background</label><input id="frameColor" type="color" value="#FFFFFF"></div>
+    <div class="control"><label>Image frame border</label><input id="borderColor" type="color" value="#FFFFFF"></div>
+    <div class="control"><label>Palette card 1</label><input id="c1" type="color" value="#008A8A"></div>
+    <div class="control"><label>Palette card 2</label><input id="c2" type="color" value="#14A3A3"></div>
+    <div class="control"><label>Palette card 3</label><input id="c3" type="color" value="#66CFCF"></div>
+    <div class="control"><label>Palette card 4</label><input id="c4" type="color" value="#EAF7F7"></div>
+    <div class="control"><label>Palette card 5</label><input id="c5" type="color" value="#FFFFFF"></div>
+    <div class="control"><label>Palette card 6</label><input id="c6" type="color" value="#111111"></div>
+    <button id="applyExtracted" class="secondary" style="width:100%">Use Extracted Colors</button>
+  </div>
+
+  <!-- IMAGE -->
+  <div class="tab-page" id="page-image">
+    <div class="control"><label>Image width <span id="iwVal">700</span> px</label><input id="iw" type="range" min="250" max="850" value="700"></div>
+    <div class="control"><label>Image height <span id="ihVal">700</span> px</label><input id="ih" type="range" min="250" max="780" value="700"></div>
+    <div class="control"><label>Image X <span id="ixVal">1120</span></label><input id="ix" type="range" min="800" max="1450" value="1120"></div>
+    <div class="control"><label>Image Y <span id="iyVal">180</span></label><input id="iy" type="range" min="100" max="430" value="180"></div>
+    <div class="control"><label>Frame radius <span id="radiusVal">20</span></label><input id="radius" type="range" min="0" max="45" value="20"></div>
+    <div class="control"><label>Image fit</label><select id="fit"><option value="cover">Cover</option><option value="contain">Contain</option></select></div>
+    <div class="control"><label>Image opacity <span id="opacityVal">100%</span></label><input id="opacity" type="range" min="20" max="100" value="100"></div>
+    <div class="control"><label class="check"><input id="showImage" type="checkbox" checked> Show reference image</label></div>
+  </div>
+
+  <!-- STYLE -->
+  <div class="tab-page" id="page-style">
+    <div class="control"><label>Board padding <span id="padVal">80</span></label><input id="pad" type="range" min="35" max="130" value="80"></div>
+    <div class="control"><label>Heading size <span id="headSizeVal">58</span></label><input id="headSize" type="range" min="35" max="90" value="58"></div>
+    <div class="control"><label>Section size <span id="sectionSizeVal">28</span></label><input id="sectionSize" type="range" min="18" max="42" value="28"></div>
+    <div class="control"><label>Decor opacity <span id="decorVal">8%</span></label><input id="decor" type="range" min="0" max="25" value="8"></div>
+    <div class="control"><label>Board title gap <span id="titleGapVal">24</span></label><input id="titleGap" type="range" min="5" max="60" value="24"></div>
+    <div class="control"><label>Palette card height <span id="cardHVal">150</span></label><input id="cardH" type="range" min="110" max="200" value="150"></div>
+    <button id="reset" class="secondary" style="width:100%">Reset Board Settings</button>
+  </div>
+
+</section>
+
+</div>
+
+
+<script>
+/* =========================
+   STATE
+========================= */
+let sourceImage=null;
+let extracted=[];
+let detected="";
+let analyzed=false;
+
+const $=id=>document.getElementById(id);
+const canvas=$("board");
+const ctx=canvas.getContext("2d");
+
+const state={
+  bg:"#F7F9F9",
+  heading:"#202020",
+  accent:"#008A8A",
+  body:"#58636E",
+  frame:"#FFFFFF",
+  border:"#FFFFFF",
+  palette:["#008A8A","#14A3A3","#66CFCF","#EAF7F7","#FFFFFF","#111111"],
+  iw:700,ih:700,ix:1120,iy:180,radius:20,fit:"cover",opacity:100,
+  pad:80,headSize:58,sectionSize:28,decor:8,titleGap:24,cardH:150,
+  fontSize:76
+};
+
+/* =========================
+   ELEMENT EVENTS
+========================= */
+$("upload").onclick=()=>$("file").click();
+$("file").onchange=e=>{if(e.target.files[0]) loadFile(e.target.files[0])};
+
+["dragenter","dragover"].forEach(ev=>$("upload").addEventListener(ev,e=>{
+  e.preventDefault();$("upload").classList.add("drag");
+}));
+["dragleave","drop"].forEach(ev=>$("upload").addEventListener(ev,e=>{
+  e.preventDefault();$("upload").classList.remove("drag");
+}));
+$("upload").addEventListener("drop",e=>{
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith("image/"))loadFile(f);
+});
+document.addEventListener("paste",e=>{
+  for(const item of e.clipboardData?.items||[]){
+    if(item.type.startsWith("image/")){loadFile(item.getAsFile());break}
+  }
+});
+
+function loadFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      sourceImage=img;
+      $("preview").innerHTML="";
+      const p=document.createElement("img");p.src=e.target.result;$("preview").appendChild(p);
+      $("analyze").disabled=false;
+      $("download").disabled=true;
+      $("status").textContent="Image loaded. Click Analyze Design.";
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* =========================
+   ANALYZE
+========================= */
+$("analyze").onclick=async()=>{
+  if(!sourceImage)return;
+  $("analyze").disabled=true;
+  try{
+    $("status").textContent="Extracting smart color palette...";
+    extracted=smartPalette(sourceImage,6);
+    applyPaletteToUI(extracted);
+    if($("ocr").checked){
+      $("status").textContent="Reading text...";
+      detected=await runOCR(sourceImage);
+      $("detectedText").value=cleanOCR(detected);
+    }
+    analyzed=true;
+    if(detected) autoFontSuggestions(detected);
+    render();
+    $("download").disabled=false;
+    $("empty").style.display="none";
+    $("status").textContent="Done ✓ You can now customize every board element.";
+  }catch(err){
+    console.error(err);
+    analyzed=true;
+    render();
+    $("download").disabled=false;
+    $("empty").style.display="none";
+    $("status").textContent="Color analysis completed. OCR was unavailable.";
+  }
+  $("analyze").disabled=false;
+};
+
+/* =========================
+   SMART COLOR PALETTE
+   - filters greys unless visually dominant
+   - favors saturated colors
+========================= */
+function smartPalette(img,count){
+  const c=document.createElement("canvas");
+  const size=180, ratio=img.height/img.width;
+  c.width=size;c.height=Math.max(1,Math.round(size*ratio));
+  const x=c.getContext("2d");x.drawImage(img,0,0,c.width,c.height);
+  const d=x.getImageData(0,0,c.width,c.height).data;
+  const buckets={};
+
+  for(let i=0;i<d.length;i+=16){
+    const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
+    if(a<180)continue;
+    const max=Math.max(r,g,b),min=Math.min(r,g,b);
+    const lum=(r+g+b)/3;
+    if(lum>248||lum<8)continue;
+    const q=[Math.round(r/16)*16,Math.round(g/16)*16,Math.round(b/16)*16];
+    const key=q.join(",");
+    const sat=max-min;
+    buckets[key]=(buckets[key]||0)+1;
+  }
+
+  const arr=Object.entries(buckets).map(([k,n])=>{
+    const rgb=k.split(",").map(Number);
+    const max=Math.max(...rgb),min=Math.min(...rgb);
+    return {rgb,n,sat:max-min,score:n*(1+Math.min(1,(max-min)/110))};
+  }).sort((a,b)=>b.score-a.score);
+
+  const result=[];
+  for(const item of arr){
+    if(result.some(r=>dist(r.rgb,item.rgb)<35))continue;
+    result.push({rgb:item.rgb,hex:hex(...item.rgb)});
+    if(result.length===count)break;
+  }
+
+  // If all dominant colors are neutral, add neutrals from population.
+  if(result.length<count){
+    for(const item of arr.sort((a,b)=>b.n-a.n)){
+      if(!result.some(r=>dist(r.rgb,item.rgb)<30)){
+        result.push({rgb:item.rgb,hex:hex(...item.rgb)});
+      }
+      if(result.length===count)break;
+    }
+  }
+  while(result.length<count){
+    const fallback=["#008A8A","#14A3A3","#66CFCF","#EAF7F7","#FFFFFF","#111111"][result.length];
+    result.push({rgb:rgbObj(fallback),hex:fallback});
+  }
+  return result;
+}
+
+function dist(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2)}
+function hex(r,g,b){return "#"+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("").toUpperCase()}
+function rgbObj(h){h=h.replace("#","");return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]}
+
+/* =========================
+   OCR
+========================= */
+async function loadTesseract(){
+  if(window.Tesseract)return window.Tesseract;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.onload=resolve;s.onerror=()=>reject(new Error("OCR CDN failed"));
+    document.head.appendChild(s);
+  });
+  return window.Tesseract;
+}
+async function runOCR(img){
+  const T=await loadTesseract();
+  const c=document.createElement("canvas");
+  const max=1400,scale=Math.min(1,max/Math.max(img.width,img.height));
+  c.width=Math.max(1,Math.round(img.width*scale));
+  c.height=Math.max(1,Math.round(img.height*scale));
+  const x=c.getContext("2d");
+  x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+  const result=await T.recognize(c,"eng",{logger:m=>{
+    if(typeof m.progress==="number")$("status").textContent="Reading text... "+Math.round(m.progress*100)+"%";
+  }});
+  return result.data.text||"";
+}
+function cleanOCR(text){
+  return text.replace(/[\r\n]+/g," ").replace(/\s+/g," ").replace(/[|]{2,}/g," ").trim().slice(0,160);
+}
+
+/* =========================
+   FONT SUGGESTION
+========================= */
+function autoFontSuggestions(text){
+  const upper=(text.match(/[A-Z]/g)||[]).length;
+  const lower=(text.match(/[a-z]/g)||[]).length;
+  const ratio=upper+lower?upper/(upper+lower):.5;
+  if(ratio>.68){
+    $("font1").value="Montserrat";$("font2").value="Geologica";
+  }else{
+    $("font1").value="Poppins";$("font2").value="Geologica";
+  }
+}
+
+/* =========================
+   UI STATE
+========================= */
+function bind(id,key,valEl){
+  const el=$(id);
+  el.addEventListener("input",()=>{
+    state[key]=el.type==="range"?Number(el.value):el.value;
+    if(valEl)$(valEl).textContent=el.value;
+    render();
+  });
+}
+bind("fontSize","fontSize","fontSizeVal");
+bind("iw","iw","iwVal");bind("ih","ih","ihVal");bind("ix","ix","ixVal");bind("iy","iy","iyVal");
+bind("radius","radius","radiusVal");bind("opacity","opacity","opacityVal");
+bind("pad","pad","padVal");bind("headSize","headSize","headSizeVal");bind("sectionSize","sectionSize","sectionSizeVal");
+bind("decor","decor","decorVal");bind("titleGap","titleGap","titleGapVal");bind("cardH","cardH","cardHVal");
+
+["heading1","heading2","typographyLabel","primarySample","tags","character","detectedText","font1","font2"].forEach(id=>{
+  $(id).addEventListener("input",render);
+});
+$("showDetected").onchange=render;
+$("showImage").onchange=render;
+$("fit").onchange=()=>{state.fit=$("fit").value;render()};
+
+["bgColor","headingColor","accentColor","bodyColor","frameColor","borderColor"].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    const map={bgColor:"bg",headingColor:"heading",accentColor:"accent",bodyColor:"body",frameColor:"frame",borderColor:"border"};
+    state[map[id]]=$(id).value;render();
+  });
+});
+["c1","c2","c3","c4","c5","c6"].forEach((id,i)=>{
+  $(id).addEventListener("input",()=>{state.palette[i]=$(id).value;render()});
+});
+$("applyExtracted").onclick=()=>{
+  applyPaletteToUI(extracted);
+  render();
+};
+function applyPaletteToUI(p){
+  if(!p||!p.length)return;
+  state.palette=p.slice(0,6).map(x=>x.hex);
+  state.accent=state.palette[0]||state.accent;
+  $("accentColor").value=state.accent;
+  state.bg=state.palette.find(x=>brightness(rgbObj(x))>190)||"#F7F9F9";
+  $("bgColor").value=state.bg;
+  ["c1","c2","c3","c4","c5","c6"].forEach((id,i)=>{
+    $(id).value=state.palette[i]; 
+  });
+}
+function brightness(rgb){return .299*rgb[0]+.587*rgb[1]+.114*rgb[2]}
+
+/* =========================
+   TABS
+========================= */
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tab-page").forEach(x=>x.classList.remove("active"));
+    tab.classList.add("active");
+    $("page-"+tab.dataset.tab).classList.add("active");
+  };
+});
+
+/* =========================
+   RENDER BOARD
+========================= */
+function render(){
+  const W=1920,H=1080;
+  ctx.clearRect(0,0,W,H);
+
+  const bg=state.bg, heading=state.heading, accent=state.accent, body=state.body;
+
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // subtle decoration
+  ctx.fillStyle=alpha(accent,state.decor/100);
+  ctx.beginPath();ctx.arc(1710,170,430,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=alpha(accent,state.decor/150);
+  ctx.beginPath();ctx.arc(1830,880,300,0,Math.PI*2);ctx.fill();
+
+  const p=state.pad;
+
+  // Header: separate text runs fixes merged heading/ampersand problem.
+  ctx.textBaseline="alphabetic";
+  ctx.font=`800 ${state.headSize}px Inter`;
+  ctx.fillStyle=heading;
+  ctx.fillText($("heading1").value,p,100);
+
+  const firstW=ctx.measureText($("heading1").value).width;
+  const gap=state.titleGap;
+  ctx.fillStyle=accent;
+  ctx.fillText($("heading2").value,p+firstW+gap,100);
+
+  ctx.strokeStyle=accent;ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(p,132);ctx.lineTo(p+210,132);ctx.stroke();
+
+  // Typography
+  ctx.font=`700 ${state.sectionSize}px Inter`;
+  ctx.fillStyle=accent;
+  ctx.fillText($("typographyLabel").value,p,205);
+
+  const f1=$("font1").value;
+  const f2=$("font2").value;
+  let sample=$("primarySample").value||"DESIGN DNA";
+  if(sample.length>22)sample=sample.slice(0,22);
+
+  ctx.font=`800 ${state.fontSize}px '${f1}',sans-serif`;
+  ctx.fillStyle=heading;
+  ctx.fillText(sample.toUpperCase(),p,310);
+
+  ctx.font="500 23px Inter";
+  ctx.fillStyle=body;
+  ctx.fillText(`${f1} • Bold / SemiBold`,p+2,355);
+
+  ctx.font=`600 54px '${f2}',sans-serif`;
+  ctx.fillStyle=heading;
+  ctx.fillText("Aa  ABCDEFGHIJKLMNOP",p,445);
+
+  ctx.font="500 23px Inter";
+  ctx.fillStyle=body;
+  ctx.fillText(`${f2} • Supporting / Body`,p+2,490);
+
+  // Tags with safe spacing
+  drawTags($("tags").value.split(",").map(x=>x.trim()).filter(Boolean),p,545,accent,heading);
+
+  // Palette
+  ctx.font=`700 ${state.sectionSize}px Inter`;
+  ctx.fillStyle=accent;
+  ctx.fillText("COLOR PALETTE",p,680);
+
+  const boxW=125, gapC=14;
+  state.palette.slice(0,6).forEach((color,i)=>{
+    const x=p+i*(boxW+gapC);
+    const h=state.cardH;
+    roundRect(x,715,boxW,h,12,color);
+
+    const rgb=rgbObj(color);
+    const tc=brightness(rgb)>155?heading:"#FFFFFF";
+    ctx.fillStyle=tc;
+    ctx.font="700 17px Inter";
+    ctx.fillText(color,x+11,715+h-43);
+    ctx.font="600 11px Inter";
+    ctx.fillText(i===0?"PRIMARY":i===1?"SECONDARY":i===2?"ACCENT":"SUPPORT",x+11,715+h-19);
+  });
+
+  // Reference image
+  if($("showImage").checked && sourceImage){
+    const ix=state.ix,iy=state.iy,iw=state.iw,ih=state.ih,r=state.radius;
+    roundRect(ix,iy,iw,ih,r,state.frame);
+    ctx.save();
+    roundedClip(ix+12,iy+12,iw-24,ih-24,Math.max(0,r-7));
+    ctx.globalAlpha=state.opacity/100;
+
+    let scale;
+    if(state.fit==="contain"){
+      scale=Math.min((iw-24)/sourceImage.width,(ih-24)/sourceImage.height);
+    }else{
+      scale=Math.max((iw-24)/sourceImage.width,(ih-24)/sourceImage.height);
+    }
+    const dw=sourceImage.width*scale,dh=sourceImage.height*scale;
+    const dx=ix+12+((iw-24)-dw)/2;
+    const dy=iy+12+((ih-24)-dh)/2;
+    ctx.drawImage(sourceImage,dx,dy,dw,dh);
+    ctx.globalAlpha=1;
+    ctx.restore();
+
+    ctx.strokeStyle=state.border;ctx.lineWidth=2;
+    roundedStroke(ix,iy,iw,ih,r);
+  }
+
+  // Design character
+  ctx.fillStyle=heading;ctx.font="700 27px Inter";
+  ctx.fillText("DESIGN CHARACTER",state.ix,940);
+  ctx.fillStyle=body;ctx.font="500 20px Inter";
+  ctx.fillText($("character").value.slice(0,70),state.ix,975);
+
+  if($("showDetected").checked && $("detectedText").value.trim()){
+    ctx.fillStyle=accent;ctx.font="700 15px Inter";
+    ctx.fillText("DETECTED TEXT",state.ix,1015);
+    ctx.fillStyle=heading;ctx.font="500 15px Inter";
+    ctx.fillText($("detectedText").value.slice(0,62),state.ix+145,1015);
+  }
+
+  ctx.fillStyle=body;ctx.font="500 13px Inter";
+  ctx.fillText("Generated with Rahul Tools • Design DNA Analyzer",p,1035);
+}
+
+function drawTags(tags,x,y,accent,heading){
+  let xx=x;
+  const maxX=1000;
+  ctx.font="700 16px Inter";
+  tags.slice(0,5).forEach(tag=>{
+    const w=ctx.measureText(tag.toUpperCase()).width+34;
+    if(xx+w>maxX){xx=x;y+=56}
+    roundRect(xx,y,w,42,21,alpha(accent,.12));
+    ctx.fillStyle=heading;
+    ctx.fillText(tag.toUpperCase(),xx+17,y+27);
+    xx+=w+10;
+  });
+}
+function alpha(hexv,a){
+  const rgb=rgbObj(hexv);return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+}
+function roundRect(x,y,w,h,r,color){
+  ctx.fillStyle=color;ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();
+}
+function roundedClip(x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.clip();
+}
+function roundedStroke(x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.stroke();
+}
+
+/* =========================
+   DOWNLOAD
+========================= */
+$("download").onclick=()=>{
+  if(!analyzed)return;
+  const a=document.createElement("a");
+  a.download="rahul-tools-design-dna-1920x1080.png";
+  a.href=canvas.toDataURL("image/png");
+  a.click();
+};
+
+/* =========================
+   RESET
+========================= */
+$("reset").onclick=()=>{
+  Object.assign(state,{
+    bg:"#F7F9F9",heading:"#202020",accent:"#008A8A",body:"#58636E",frame:"#FFFFFF",border:"#FFFFFF",
+    iw:700,ih:700,ix:1120,iy:180,radius:20,fit:"cover",opacity:100,pad:80,headSize:58,sectionSize:28,decor:8,titleGap:24,cardH:150,fontSize:76
+  });
+  const vals={
+    bgColor:"#F7F9F9",headingColor:"#202020",accentColor:"#008A8A",bodyColor:"#58636E",frameColor:"#FFFFFF",borderColor:"#FFFFFF",
+    iw:700,ih:700,ix:1120,iy:180,radius:20,opacity:100,pad:80,headSize:58,sectionSize:28,decor:8,titleGap:24,cardH:150,fontSize:76
+  };
+  for(const [id,v] of Object.entries(vals))$(id).value=v;
+  ["iwVal","ihVal","ixVal","iyVal","radiusVal","padVal","headSizeVal","sectionSizeVal","decorVal","titleGapVal","cardHVal","fontSizeVal"].forEach(id=>{
+    const map={iwVal:"iw",ihVal:"ih",ixVal:"ix",iyVal:"iy",radiusVal:"radius",padVal:"pad",headSizeVal:"headSize",sectionSizeVal:"sectionSize",decorVal:"decor",titleGapVal:"titleGap",cardHVal:"cardH",fontSizeVal:"fontSize"};
+    $(id).textContent=$(map[id]).value;
+  });
+  render();
+};
+
+/* Initial empty board */
+render();
+</script>
+</body>
+</html>
